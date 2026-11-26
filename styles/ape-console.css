@@ -496,3 +496,53 @@
 .apec-ml-action { margin-top: 10px; padding: 12px; border-radius: 12px; background: var(--c-panel); border: 1px solid var(--c-border); font-weight: 800; font-size: 17px; min-height: 48px; }
 
 @media (max-width: 640px) { .apec-pinwire svg { min-width: 0; } }
+
+/* ======================================================================
+   BLOQUES MAKECODE
+   ====================================================================== */
+.apec-blockly { position: relative; height: 430px; min-height: 300px; border-bottom: 1px solid var(--c-border); background: rgb(236, 240, 241); }
+.apec-blockly-ro { height: 260px; border: 0; }
+.apec-blockly-loading { padding: 16px; }
+.apec-blocks-warn { font-size: 14px; color: var(--c-warn); padding: 0 12px; }
+.apec-blocks-warn:empty { display: none; }
+.apec-blocks-py { margin: 0; border-radius: 0; border-left: 0; border-right: 0; max-height: 26vh; overflow: auto; font-size: 13.5px; }
+.apec-blocks-py[hidden] { display: none; }
+.apec-mb-layout-blocks { grid-template-columns: auto minmax(0, 1fr); }
+@media (max-width: 1100px) { .apec-mb-layout-blocks { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .apec-blockly { height: 380px; } }
+.apec-codeview-title .apec-ro-py { min-height: 30px !important; padding: 2px 10px !important; font-size: 12.5px !important; }
+.apec-press-btn { user-select: none; touch-action: none; }
+.apec-press-btn.held { background: rgb(255, 176, 0) !important; color: rgb(26, 18, 0) !important; }
+/* Blockly dentro del juego */
+.apec-root .blocklyToolboxDiv { font-family: var(--font-ui); }
+.apec-root .blocklyTreeLabel { font-weight: 700; font-size: 14px; }
+.apec-root .blocklyWidgetDiv, .blocklyDropDownDiv { z-index: 9500 !important; }
+.blocklyWidgetDiv, .blocklyDropDownDiv, .blocklyTooltipDiv { z-index: 9500 !important; }
+
+/* bloques dibujados en las explicaciones */
+.mk, .mk-r, .mk-h, .mk-head {
+  display: inline-flex; align-items: center; gap: 6px; font: 700 13.5px/1.2 "Roboto Mono", ui-monospace, Menlo, Consolas, monospace;
+  color: rgb(255, 255, 255); padding: 6px 10px; border-radius: 6px; white-space: nowrap; vertical-align: middle;
+}
+.mk-r { border-radius: 999px; padding: 4px 12px; border: 2px solid rgba(0, 0, 0, 0.15); }
+.mk-h { clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 50%, calc(100% - 10px) 100%, 10px 100%, 0 50%); padding: 4px 16px; }
+.mk-c { display: inline-flex; flex-direction: column; vertical-align: top; margin: 4px 0; border-radius: 6px; }
+.mk-c > .mk-head { border-radius: 6px 6px 0 0; }
+.mk-c > .mk-body { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; margin-left: 14px; padding: 4px 6px; background: rgba(255, 255, 255, 0.55); min-height: 22px; }
+.mk-c > .mk-foot { height: 12px; border-radius: 0 0 6px 6px; }
+.mk-basic, .mk-c.mk-basic > .mk-head, .mk-c.mk-basic > .mk-foot { background: #1E90FF; }
+.mk-input, .mk-c.mk-input > .mk-head, .mk-c.mk-input > .mk-foot { background: #D400D4; }
+.mk-led, .mk-c.mk-led > .mk-head, .mk-c.mk-led > .mk-foot { background: #5C2D91; }
+.mk-loops, .mk-c.mk-loops > .mk-head, .mk-c.mk-loops > .mk-foot { background: #00AA00; }
+.mk-logic, .mk-c.mk-logic > .mk-head, .mk-c.mk-logic > .mk-foot { background: #00A4A6; }
+.mk-vars, .mk-c.mk-vars > .mk-head, .mk-c.mk-vars > .mk-foot { background: #DC143C; }
+.mk-math, .mk-c.mk-math > .mk-head, .mk-c.mk-math > .mk-foot { background: #9400D3; }
+.mk-pins, .mk-c.mk-pins > .mk-head, .mk-c.mk-pins > .mk-foot { background: #B22222; }
+.mk-c.mk-basic, .mk-c.mk-input, .mk-c.mk-logic, .mk-c.mk-loops { background: transparent; }
+.mk-cats { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.mk-cat { color: rgb(255, 255, 255); font-weight: 800; font-size: 13px; padding: 5px 12px; border-radius: 4px; border-left: 6px solid rgba(0, 0, 0, 0.25); }
+.apec-grid2 .mk-c, .apec-grid2 .mk { margin-bottom: 6px; }
+.apec-sim-wide { grid-template-columns: minmax(230px, 0.42fr) minmax(0, 1.58fr); max-width: 1500px; }
+@media (max-width: 900px) { .apec-sim-wide { grid-template-columns: 1fr; } }
+.apec-mb-layout-blocks .apec-mb-side { flex-direction: column; align-items: stretch; }
+.apec-mb-layout-blocks .apec-mb-sim { max-width: 330px; }

@@ -2,6 +2,14 @@
 // Cada misión = metas de aprendizaje + explicación (pantallas cortas + tarjetas) + actividades + reflexión.
 // Las actividades se verifican por la lógica, no por el texto exacto.
 import { runPython, codeWithoutComments } from './python-mini.js';
+import { B, put, putB, num, txt, stack, program } from './blocks-gen.js';
+
+/* ---------------- bloques dibujados (para las explicaciones) ---------------- */
+const mk = (cat, text) => `<span class="mk mk-${cat}">${text}</span>`;
+const mkR = (cat, text) => `<span class="mk-r mk-${cat}">${text}</span>`;
+const mkH = (cat, text) => `<span class="mk-h mk-${cat}">${text}</span>`;
+const mkC = (cat, head, inner) => `<span class="mk-c mk-${cat}"><span class="mk-head">${head}</span><span class="mk-body">${inner}</span><span class="mk-foot"></span></span>`;
+const mkIf = (cond, yes, no) => `<span class="mk-c mk-logic"><span class="mk-head">si ${mkH('logic', cond)} entonces</span><span class="mk-body">${yes}</span><span class="mk-head">si no</span><span class="mk-body">${no}</span><span class="mk-foot"></span></span>`;
 
 /* ---------------- utilidades de verificación ---------------- */
 export const norm = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -133,70 +141,67 @@ export const MISSIONS = [
   /* ---------------------------------------------------------------- 2 */
   {
     n: 2, area: 'hw', icon: '🟩', title: 'La placa micro:bit',
-    tema: 'Placas programables: entradas, salidas y programas',
+    tema: 'Placas programables: entradas, salidas y programas con bloques en MakeCode',
     goals: [
       'Reconozco las partes de la micro:bit y si son entrada o salida.',
       'Ubico un LED de la matriz con sus coordenadas (x, y).',
-      'Programo eventos de la micro:bit (botones, sacudir) y pruebo el resultado.',
+      'Programo eventos de la micro:bit con bloques (botones, agitar) y pruebo el resultado.',
     ],
     lesson: [
-      { title: '¿Qué es una placa programable?', html: `<p>Es una <b>pequeña computadora</b> en una placa: tiene un procesador, memoria, entradas y salidas. Le cargamos un programa y lo ejecuta.</p>
-        <p>La <b>micro:bit</b> se programa con bloques (MakeCode) o con Python.</p>` },
-      { title: 'Partes de la micro:bit', html: `<div class="apec-grid2">
-          <div><b>⌨️ Entradas</b><ul><li>Botones <b>A</b> y <b>B</b></li><li>Sensor de <b>luz</b></li><li>Sensor de <b>temperatura</b></li><li><b>Acelerómetro</b> (movimiento, sacudir)</li><li><b>Brújula</b></li><li><b>Micrófono</b> (V2)</li></ul></div>
-          <div><b>💡 Salidas</b><ul><li>Matriz de <b>25 LED</b> (5 × 5)</li><li><b>Parlante</b> (V2)</li><li><b>Pines</b> para conectar LED, motores…</li></ul></div>
+      { title: '¿Qué es una placa programable?', html: `<p>La micro:bit es una <b>minicomputadora</b>: <b>recibe información</b> por sus dispositivos de entrada, la <b>procesa</b> con su microprocesador (el cerebro de la placa) y <b>muestra resultados</b> por sus dispositivos de salida.</p>
+        <p>Se programa en <b>MakeCode</b> con <b>bloques</b> (también con Python o JavaScript). Los bloques se arrastran y encastran como piezas.</p>` },
+      { title: 'Sensores y actuadores', html: `<div class="apec-grid2">
+          <div><b>👀 Sensores (entrada)</b><small>Son los ojos y oídos de la placa:</small><ul><li>Botones <b>A</b> y <b>B</b></li><li>Sensor de <b>luz</b></li><li>Sensor de <b>temperatura</b></li><li><b>Acelerómetro</b> (movimiento, agitar)</li><li><b>Magnetómetro</b> (brújula)</li><li><b>Micrófono</b> (V2)</li></ul></div>
+          <div><b>💡 Actuadores (salida)</b><small>Transforman la información en luz, sonido o movimiento:</small><ul><li>Matriz de <b>25 LED</b> ("pantalla")</li><li><b>Altavoz</b> (V2)</li><li>Por los <b>pines</b>: LED, buzzer, servomotor…</li></ul></div>
+        </div>` },
+      { title: 'Dos bloques fundamentales', html: `<div class="apec-grid2">
+          <div>${mkC('basic', 'al iniciar', mk('basic', 'mostrar ícono ❤️ ▾'))}<small>Se ejecuta <b>una sola vez</b>, cuando la placa se enciende o se reinicia. Ideal para un saludo o para darle valor inicial a las variables.</small></div>
+          <div>${mkC('basic', 'para siempre', mk('basic', `mostrar número ${mkR('input', 'temperatura (°C)')}`))}<small>Se <b>repite sin parar</b> mientras la placa está prendida. Ideal para leer sensores todo el tiempo.</small></div>
         </div>
-        <p class="apec-tip">💡 La <b>radio/Bluetooth</b> sirve para enviar <i>y</i> recibir: es de entrada y salida.</p>` },
+        <p>Y los <b>eventos</b> de Entrada, que se ejecutan cuando pasa algo:</p>
+        <div class="apec-grid2"><div>${mkC('input', 'al presionarse el botón A ▾', mk('basic', `mostrar número ${mkR('input', 'nivel de luz')}`))}</div><div>${mkC('input', 'si agitado ▾', mk('basic', 'mostrar número 2'))}</div></div>` },
       { title: 'Coordenadas de la matriz', html: `<p>Cada LED tiene una posición <b>(x, y)</b>:</p>
         <ul><li><b>x</b> = columna, de 0 (izquierda) a 4 (derecha)</li><li><b>y</b> = fila, de 0 (arriba) a 4 (abajo)</li></ul>
-        <div class="apec-ex"><code>led.plot(0, 0)</code> prende el LED de arriba a la izquierda.<br><code>led.plot(4, 4)</code> prende el de abajo a la derecha.<br><code>led.plot(2, 2)</code> prende el del centro.</div>` },
-      { title: 'Los programas de la micro:bit', html: `<p>Un programa de micro:bit tiene <b>eventos</b>:</p>
-        <ul><li><b>al iniciar</b>: se ejecuta una vez, cuando se prende.</li><li><b>para siempre</b>: se repite sin parar.</li><li><b>al presionar el botón A</b>: se ejecuta cada vez que aprietas A.</li></ul>
-        <pre class="apec-code">def al_presionar_a():
-    basic.show_icon(IconNames.HEART)
-input.on_button_pressed(Button.A, al_presionar_a)</pre>
-        <p>Este programa muestra un ❤️ cada vez que aprietas <b>A</b>. El botón es la <b>entrada</b> y la matriz es la <b>salida</b>.</p>` },
-      { title: 'Programar en el simulador', html: `<p>En las actividades vas a programar una micro:bit <b>simulada</b> con el Python de MakeCode. Estas son las instrucciones que más vas a usar:</p>
-        <table class="apec-table"><tbody>
-          <tr><th><code>basic.show_icon(IconNames.HEART)</code></th><td>Muestra un ícono (HEART, HAPPY, SAD, YES, NO…)</td></tr>
-          <tr><th><code>basic.show_number(7)</code></th><td>Muestra un número</td></tr>
-          <tr><th><code>basic.show_string("HOLA")</code></th><td>Muestra un texto</td></tr>
-          <tr><th><code>led.plot(x, y)</code></th><td>Prende un LED</td></tr>
-          <tr><th><code>randint(1, 6)</code></th><td>Número al azar entre 1 y 6</td></tr>
-          <tr><th><code>input.temperature()</code></th><td>Lee el sensor de temperatura</td></tr>
-          <tr><th><code>basic.pause(500)</code></th><td>Espera medio segundo (500 ms)</td></tr>
-        </tbody></table>
-        <p>Para los eventos se escribe primero la función con <code>def</code> y después se "engancha" al evento:</p>
-        <pre class="apec-code">def al_sacudir():
-    basic.show_icon(IconNames.SURPRISED)
-input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>` },
+        <p>${mk('led', 'graficar x 0 y 0')} prende el LED de arriba a la izquierda. ${mk('led', 'graficar x 2 y 2')} prende el del centro.</p>
+        <p>En la categoría <b style="color:#5C2D91">LED</b> están <i>graficar</i>, <i>desgraficar</i> (apagar) y <i>alternar</i>.</p>` },
+      { title: 'Las categorías de bloques', html: `<p>En MakeCode cada categoría tiene su color. Fíjate en la <b>forma</b>:</p>
+        <ul><li>Bloques que <b>encastran</b> arriba y abajo: son instrucciones (${mk('basic', 'mostrar número 0')}).</li>
+        <li>Bloques <b>redondeados</b>: devuelven un valor, como un sensor (${mkR('input', 'nivel de luz')} va de 0 a 255).</li>
+        <li>Bloques <b>hexagonales</b>: son preguntas de verdadero o falso (${mkH('input', 'botón A ▾ presionado')}).</li></ul>
+        <div class="mk-cats">${['basic', 'input', 'led', 'loops', 'logic', 'vars', 'math', 'pins'].map((k) => `<span class="mk-cat mk-${k}">${{ basic: 'Básico', input: 'Entrada', led: 'LED', loops: 'Bucles', logic: 'Lógica', vars: 'Variables', math: 'Matemática', pins: 'Pines' }[k]}</span>`).join('')}</div>
+        <p class="apec-tip">💡 En el simulador puedes tocar <b>🐍 Ver en Python</b> para ver el mismo programa escrito en Python.</p>` },
     ],
     cards: [
-      { front: 'Matriz de LED', back: '25 luces (5×5) que funcionan como pantalla de salida.' },
-      { front: 'Acelerómetro', back: 'Sensor de entrada que detecta movimiento, inclinación y sacudidas.' },
-      { front: 'led.plot(x, y)', back: 'Prende el LED de la columna x y la fila y (de 0 a 4).' },
-      { front: 'para siempre', back: 'Evento que repite su contenido una y otra vez mientras la placa está prendida.' },
+      { front: 'Matriz de LED', back: 'Actuador: 25 luces (5×5) que funcionan como pantalla de salida.' },
+      { front: 'Acelerómetro', back: 'Sensor que detecta movimiento, inclinación y si agitas la placa.' },
+      { front: 'graficar x y', back: 'Bloque de LED que prende el LED de la columna x y la fila y (de 0 a 4).' },
+      { front: 'al iniciar / para siempre', back: 'Al iniciar: una sola vez al prender. Para siempre: se repite sin parar.' },
     ],
     phases: [
       {
         id: 'm3-a', title: 'Explora la placa', type: 'mbsim', mode: 'explore', sensors: ['temperature'],
-        prompt: `<p>La micro:bit de la ciudad ya tiene un programa cargado. <b>Usa sus entradas</b> (botones, sacudir, temperatura) y descubre las <b>4 salidas</b> que tiene programadas.</p>
-          <p class="apec-tip">💡 Lee el programa de la derecha: cada <code>def</code> es lo que pasa cuando ocurre un evento.</p>`,
-        code: 'def al_presionar_a():\n    basic.show_icon(IconNames.HEART)\ninput.on_button_pressed(Button.A, al_presionar_a)\n\ndef al_presionar_b():\n    basic.show_number(input.temperature())\ninput.on_button_pressed(Button.B, al_presionar_b)\n\ndef al_sacudir():\n    basic.show_icon(IconNames.SURPRISED)\ninput.on_gesture(Gesture.SHAKE, al_sacudir)\n\ndef para_siempre():\n    if input.temperature() > 30:\n        basic.show_string("CALOR")\nbasic.forever(para_siempre)\n',
+        prompt: `<p>La micro:bit de la ciudad ya tiene un programa cargado. <b>Usa sus entradas</b> (botones, agitar, temperatura) y descubre las <b>4 salidas</b> que tiene programadas.</p>
+          <p class="apec-tip">💡 Lee los bloques: cada evento dice <b>cuándo</b> pasa algo y lo de adentro dice <b>qué</b> pasa.</p>`,
+        blocks: program([
+          B('mb_on_button', { BUTTON: 'A' }, { DO: stack(B('mb_show_icon', { ICON: 'HEART' })) }),
+          B('mb_on_button', { BUTTON: 'B' }, { DO: stack(B('mb_show_number', {}, { NUM: put(B('mb_temperature')) })) }),
+          B('mb_on_gesture', { GESTURE: 'SHAKE' }, { DO: stack(B('mb_show_icon', { ICON: 'SURPRISED' })) }),
+          B('mb_forever', {}, { DO: stack(B('mb_if', {}, { COND: putB(B('mb_compare', { OP: 'GT' }, { A: put(B('mb_temperature')), B: num(30) })), DO: stack(B('mb_show_string', {}, { TEXT: txt('CALOR') })) })) }),
+        ]),
         goals: [
           { text: 'Aparece un corazón ❤️', input: 'Botón A', output: 'Matriz: ícono', done: (s) => s.shown.some((x) => x.value === 'HEART') },
           { text: 'Aparece la temperatura', input: 'Botón B + sensor de temperatura', output: 'Matriz: número', done: (s) => s.shown.some((x) => x.kind === 'number') },
-          { text: 'Aparece una cara de sorpresa 😮', input: 'Acelerómetro (sacudir)', output: 'Matriz: ícono', done: (s) => s.shown.some((x) => x.value === 'SURPRISED') },
+          { text: 'Aparece una cara de sorpresa 😮', input: 'Acelerómetro (agitar)', output: 'Matriz: ícono', done: (s) => s.shown.some((x) => x.value === 'SURPRISED') },
           { text: 'La placa dice CALOR', input: 'Sensor de temperatura (más de 30 °C)', output: 'Matriz: texto', done: (s) => s.shown.some((x) => x.kind === 'string' && x.value === 'CALOR') },
         ],
-        fail: 'Te faltan salidas por descubrir. Mira en el programa qué evento dispara cada una.',
+        fail: 'Te faltan salidas por descubrir. Mira en los bloques qué evento dispara cada una.',
       },
       {
         id: 'm3-b', title: 'Dibujar con coordenadas', type: 'mbsim', mode: 'code',
-        prompt: `<p>Ohm necesita una <b>flecha hacia arriba</b> para señalizar el puerto. Programa la placa para que, <b>al iniciar</b>, dibuje exactamente la figura del objetivo usando <code>led.plot(x, y)</code>.</p>
-          <p class="apec-tip">Recuerda: <b>x</b> es la columna (0 a 4, de izquierda a derecha) e <b>y</b> es la fila (0 a 4, de arriba hacia abajo). Ya te dejamos la punta de la flecha.</p>`,
+        prompt: `<p>Ohm necesita una <b>flecha hacia arriba</b> para señalizar el puerto. Arma un programa que, <b>al iniciar</b>, dibuje exactamente la figura del objetivo.</p>
+          <p class="apec-tip">Usa ${mk('led', 'graficar x y')} de la categoría <b>LED</b>: <b>x</b> es la columna y <b>y</b> la fila (de 0 a 4). Ya te dejamos la punta de la flecha. También puedes usar ${mk('basic', 'mostrar LEDs')}.</p>`,
         target: '..#../.###./#.#.#/..#../..#..',
-        starter: '# Al iniciar: dibuja la flecha con led.plot(x, y)\nled.plot(2, 0)\n',
+        blockStarter: program([B('mb_on_start', {}, { DO: stack(B('mb_plot', {}, { X: num(2), Y: num(0) })) })]),
         check: async (sim) => {
           const want = '..#../.###./#.#.#/..#../..#..';
           const got = sim.matrixString();
@@ -206,31 +211,31 @@ input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>` },
           const extra = [...W].filter((c, i) => c !== '#' && G[i] === '#').length;
           return `${missing ? `faltan ${missing} LED` : ''}${missing && extra ? ' y ' : ''}${extra ? `hay ${extra} LED de más` : ''}. Compara tu placa con el objetivo, LED por LED.`;
         },
-        require: [{ re: /led\.plot\s*\(/, msg: 'Usa led.plot(x, y) para prender cada LED.' }],
+        require: [{ re: /led\.plot\s*\(|basic\.show_leds\s*\(/, msg: 'Dibuja la flecha con bloques de LED (graficar) o con mostrar LEDs.' }],
       },
       {
         id: 'm3-c', title: 'Programar un dado', type: 'mbsim', mode: 'code',
-        prompt: `<p>En la feria quieren un <b>dado electrónico</b>: cuando alguien <b>sacude</b> la placa, tiene que mostrar un número al azar <b>del 1 al 6</b>.</p>
-          <p>Completa los espacios <code>___</code>, toca <b>▶ Cargar en la placa</b> y prueba con el botón <b>🤚 Sacudir</b>.</p>`,
-        starter: 'def al_sacudir():\n    basic.show_number(randint(___, ___))\ninput.on_gesture(Gesture.___, al_sacudir)\n',
+        prompt: `<p>En la feria quieren un <b>dado electrónico</b>: cuando alguien <b>agita</b> la placa, tiene que mostrar un número al azar <b>del 1 al 6</b>.</p>
+          <p>Ya está el evento ${mkC('input', 'si agitado ▾', mk('basic', 'mostrar número 0'))} Busca en <b>Matemática</b> el bloque ${mkR('math', 'escoger al azar de 0 a 10')}, ponlo dentro de <i>mostrar número</i> y cambia los números. Después toca <b>▶ Cargar en la placa</b> y prueba con <b>🤚 Sacudir</b>.</p>`,
+        blockStarter: program([B('mb_on_gesture', { GESTURE: 'SHAKE' }, { DO: stack(B('mb_show_number', {}, { NUM: num(0) })) })]),
         check: async (sim) => {
           const nums = new Set();
           for (let i = 0; i < 40; i++) {
             await sim.trigger('SHAKE');
-            if (sim.error) return 'la placa dio un error al sacudirla.';
+            if (sim.error) return 'la placa dio un error al agitarla.';
             const last = sim.lastShown('number');
-            if (!last) return 'al sacudir la placa no aparece ningún número. ¿Usaste Gesture.SHAKE y basic.show_number?';
+            if (!last) return 'al agitar la placa no aparece ningún número. ¿Usaste "si agitado" y "mostrar número"?';
             nums.add(Number(last.value));
           }
           const list = [...nums];
           if (list.some((n) => n < 1 || n > 6)) return `apareció el número ${list.find((n) => n < 1 || n > 6)}, y un dado va del 1 al 6.`;
-          if (list.length < 5) return 'siempre sale el mismo número (o casi). Usa randint para que sea al azar.';
+          if (list.length < 5) return 'siempre sale el mismo número (o casi). Usa "escoger al azar de 1 a 6".';
           return true;
         },
-        require: [{ re: /on_gesture\s*\(\s*Gesture\.SHAKE/, msg: 'El dado tiene que reaccionar al gesto de sacudir: Gesture.SHAKE.' }],
+        require: [{ re: /on_gesture\s*\(\s*Gesture\.SHAKE/, msg: 'El dado tiene que reaccionar al evento "si agitado".' }],
       },
     ],
-    reflection: 'Inventa un proyecto útil para tu liceo con la micro:bit. ¿Qué entrada usarías y qué salida?',
+    reflection: 'Inventa un proyecto útil para tu liceo con la micro:bit. ¿Qué sensor (entrada) usarías y qué actuador (salida)?',
   },
 
   /* ---------------------------------------------------------------- 3 */
@@ -315,84 +320,85 @@ input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>` },
   /* ---------------------------------------------------------------- 4 */
   {
     n: 4, area: 'hw', icon: '💡', title: 'LED y sensores en la placa',
-    tema: 'Conectar un LED y un sensor externo a la micro:bit: energía, polos y tierra (GND)',
+    tema: 'Pines y periféricos: conectar un LED y un sensor del kit de Ceibal a la micro:bit',
     goals: [
-      'Conecto un LED a la placa respetando sus polos: pata larga al pin, pata corta a GND.',
-      'Conecto un sensor externo con su alimentación (3V), su tierra (GND) y su señal (pin).',
-      'Programo la placa para que el LED reaccione al sensor.',
+      'Conecto un LED a la placa con su resistencia y respetando los polos: pata larga al pin, pata corta a GND.',
+      'Conecto un sensor externo con su alimentación (3V), su tierra (GND) y su salida (OUT) a un pin.',
+      'Programo con bloques la placa para que el LED reaccione a un sensor.',
     ],
     lesson: [
-      { title: 'Energía, polos y tierra', html: `<p>Para que algo funcione con electricidad necesita un <b>camino completo</b>: la corriente sale del <b>+</b>, pasa por el componente y vuelve al <b>−</b>.</p>
+      { title: 'Un circuito es un camino cerrado', html: `<p>A través de sus <b>pines</b> la micro:bit se conecta a componentes externos. Para que funcionen, la electricidad necesita un <b>camino cerrado</b>: todas las partes conectadas.</p>
         <table class="apec-table"><tbody>
-          <tr><th>3V (+)</th><td>La salida de energía de la micro:bit: alimenta los componentes.</td></tr>
-          <tr><th>GND (−)</th><td>La <b>tierra</b>: el punto por donde vuelve la corriente. <b>Todos</b> los componentes se conectan a GND.</td></tr>
-          <tr><th>P0, P1, P2</th><td><b>Pines</b>: el programa los usa para prender cosas (salida) o para leer sensores (entrada).</td></tr>
+          <tr><th>3V (+)</th><td>Entrega <b>3,3 V</b>: alimenta los componentes.</td></tr>
+          <tr><th>GND (−)</th><td>La <b>tierra</b>: por donde vuelve la corriente. Todos los componentes se conectan a GND.</td></tr>
+          <tr><th>P0, P1, P2</th><td>Pines <b>digitales y analógicos</b>: el programa los usa para prender cosas o leer sensores.</td></tr>
         </tbody></table>
-        <p class="apec-tip">💡 La placa necesita <b>energía</b> (cable USB o pilas) para que todo esto funcione.</p>` },
-      { title: 'El LED tiene polaridad', html: `<ul><li><b>Pata larga = ánodo (+)</b>: va al <b>pin</b> que maneja el programa (por ejemplo P0).</li>
-        <li><b>Pata corta = cátodo (−)</b>, el lado plano: va a <b>GND</b>.</li></ul>
-        <p>Si lo conectas <b>al revés</b>, no prende. Si lo conectas directo a <b>3V</b>, queda prendido siempre y el programa no lo puede apagar.</p>
-        <p class="apec-tip">💡 En los kits el LED lleva una <b>resistencia</b> para no quemarse. En el simulador ya viene incluida.</p>` },
-      { title: 'Sensores externos', html: `<p>Un <b>módulo sensor</b> (de luz, de movimiento, de humedad…) suele tener <b>3 patas</b>:</p>
-        <table class="apec-table"><tbody>
-          <tr><th style="color:#e5484d">VCC (+)</th><td>Energía: va a <b>3V</b>.</td></tr>
-          <tr><th>GND (−)</th><td>Tierra: va a <b>GND</b> (se comparte con el LED).</td></tr>
-          <tr><th style="color:#c99700">S (señal)</th><td>Lo que mide el sensor: va a un <b>pin de entrada</b>, por ejemplo P1.</td></tr>
+        <p class="apec-tip">💡 Se conecta con <b>cables cocodrilo</b> (o cocodrilo - header pin). La placa necesita <b>energía</b>: cable USB o portapilas.</p>` },
+      { title: 'Pines digitales y analógicos', html: `<div class="apec-grid2">
+          <div><b>Digital</b><small>Solo dos estados: <b>1</b> (3,3 V) o <b>0</b> (0 V). Para LED (prendido/apagado), botones y sensores que detectan o no detectan.</small><p>${mk('pins', 'escritura digital pin P0 ▾ a 1')}</p></div>
+          <div><b>Analógico</b><small>Un valor dentro de un rango: de <b>0 a 1023</b>. Para sensores que cambian de a poco (luz, humedad, temperatura).</small><p>${mkR('pins', 'lectura analógica pin P1 ▾')}</p></div>
+        </div>
+        <p class="apec-tip">⚠️ Cada pin aguanta poca corriente (unos 5 mA): por eso siempre se usa una <b>resistencia</b> con el LED.</p>` },
+      { title: 'El LED y su resistencia', html: `<ul><li><b>Pata larga = positivo (+)</b>: va, a través de la <b>resistencia</b>, al pin (P0, P1 o P2).</li>
+        <li><b>Pata corta = negativo (−)</b>: va a <b>GND</b>.</li></ul>
+        <table class="apec-table"><tbody><tr><th>LED rojo</th><td>resistencia de <b>100 Ω</b></td></tr><tr><th>LED verde y azul</th><td>resistencia de <b>10 Ω</b></td></tr></tbody></table>
+        <p>Al revés el LED no prende. Directo a 3V queda siempre prendido y el programa no lo puede apagar.</p>` },
+      { title: 'Periféricos del kit', html: `<table class="apec-table"><tbody>
+          <tr><th>Sensor de contacto/colisión</th><td><b>VCC</b> → 3V · <b>GND</b> → GND · <b>OUT</b> → P0, P1 o P2</td></tr>
+          <tr><th>Seguidor de línea</th><td>VCC → 3V · GND → GND · <b>DO</b> (digital) → un pin</td></tr>
+          <tr><th>Humedad del suelo</th><td>VCC → 3V · GND → GND · <b>AO</b> (analógico) o DO → un pin</td></tr>
+          <tr><th>Buzzer</th><td>conector <b>+</b> → P0 · <b>−</b> → GND</td></tr>
+          <tr><th>Servomotor</th><td><b>marrón</b> → GND · <b>rojo</b> → 3V · <b>anaranjado</b> → un pin</td></tr>
         </tbody></table>
         <p class="apec-tip">⚠️ Si inviertes VCC y GND, el sensor se puede dañar. ¡Revisa los polos antes de dar energía!</p>` },
-      { title: 'Leer el sensor y manejar el LED', html: `<p>Con el sensor en P1 y el LED en P0, podemos hacer un <b>farol automático</b>:</p>
-        <pre class="apec-code">def para_siempre():
-    luz = pins.analog_read_pin(AnalogPin.P1)   # 0 = oscuro, 1023 = mucha luz
-    if luz &lt; 400:
-        pins.digital_write_pin(DigitalPin.P0, 1)   # prende el LED
-    else:
-        pins.digital_write_pin(DigitalPin.P0, 0)   # apaga el LED
-basic.forever(para_siempre)</pre>
-        <p>En <b>Tinkercad</b> (Circuitos) puedes armar lo mismo y simularlo antes de hacerlo con los componentes reales.</p>` },
+      { title: 'Práctica guiada: el estacionamiento', html: `<p>Un auto estacionado tapa la luz. Con el <b>sensor de luz</b> de la placa (${mkR('input', 'nivel de luz')}, de 0 a 255) y un LED podemos marcar si el lugar está <b>ocupado</b>:</p>
+        <ol class="apec-steps"><li><b>Leer</b> el nivel de luz todo el tiempo (para siempre).</li><li>Elegir un <b>umbral</b>: por ejemplo, menos de 100 = ocupado.</li><li><b>Comparar</b>: si la luz es menor que el umbral, prender el LED; si no, apagarlo.</li></ol>
+        <div>${mkC('basic', 'para siempre', mkIf(`${mkR('input', 'nivel de luz')} &lt; 100`, mk('pins', 'escritura digital pin P0 ▾ a 1'), mk('pins', 'escritura digital pin P0 ▾ a 0')))}</div>
+        <p>En <b>Tinkercad Circuits</b> puedes armarlo y simularlo antes de usar los componentes reales.</p>` },
     ],
     cards: [
       { front: 'GND', back: 'Tierra o negativo (−): por donde vuelve la corriente. Todos los componentes van a GND.' },
-      { front: 'Pata larga del LED', back: 'Ánodo (+). Va al pin que maneja el programa (P0).' },
+      { front: 'LED rojo', back: 'Pata larga (+) con resistencia de 100 Ω al pin; pata corta (−) a GND.' },
       { front: 'VCC', back: 'La pata de energía (+) de un sensor. Va a 3V.' },
-      { front: 'Pin de señal', back: 'Pin (P0, P1, P2) que el programa usa para leer un sensor o prender un LED.' },
+      { front: 'OUT / DO / AO', back: 'La salida de un sensor: va a un pin (P0, P1 o P2) para que la placa la lea.' },
     ],
     phases: [
       {
         id: 'm5-a', title: 'Conectar el LED', type: 'pinwire', parts: ['led'], program: 'blink',
-        programText: 'def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    pins.digital_write_pin(DigitalPin.P0, 0)\n    basic.pause(500)\nbasic.forever(para_siempre)',
-        prompt: `<p>La placa ya tiene un programa que hace parpadear un LED en el <b>pin P0</b>. <b>Conecta el LED</b> a la placa y <b>dale energía</b>.</p>
-          <p class="apec-tip">Toca una pata del LED y después el conector de la placa. Para sacar un cable, tócalo. Después toca <b>⚡ Probar conexiones</b>.</p>`,
-        fail: 'Revisa los polos: pata larga (+) al pin P0, pata corta (−) a GND, y que la placa tenga energía.',
+        programBlocks: program([B('mb_forever', {}, { DO: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(1) }), B('mb_pause', {}, { MS: num(500) }), B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(0) }), B('mb_pause', {}, { MS: num(500) })) })]),
+        prompt: `<p>La placa ya tiene un programa que hace parpadear un LED en el <b>pin P0</b>. Elige la <b>resistencia</b> para el LED rojo, <b>conecta</b> el LED y <b>dale energía</b>.</p>
+          <p class="apec-tip">Toca una pata del LED y después el pin de la placa (como poner un cable cocodrilo). Para sacar un cable, tócalo.</p>`,
+        fail: 'Revisa: resistencia de 100 Ω, pata larga (+) al pin P0, pata corta (−) a GND, y que la placa tenga energía.',
       },
       {
-        id: 'm5-b', title: 'Conectar un sensor de luz', type: 'pinwire', parts: ['led', 'sensor'], program: 'farol',
-        programText: 'def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz < 400:\n        pins.digital_write_pin(DigitalPin.P0, 1)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)',
-        prompt: `<p>Chispa quiere un <b>farol automático</b>: que el LED se prenda cuando oscurece. Conecta el <b>LED</b> y el <b>sensor de luz</b> a la placa, dale energía y pruébalo moviendo la luz ambiente.</p>
-          <p class="apec-tip">El sensor tiene 3 patas: <b>VCC</b> (energía), <b>GND</b> (tierra) y <b>S</b> (señal). Mira el programa: ¿en qué pin lee el sensor?</p>`,
-        fail: 'Revisa cada pata: VCC a 3V, GND a GND, la señal al pin que lee el programa, y el LED con sus polos bien puestos.',
+        id: 'm5-b', title: 'Conectar un sensor de contacto', type: 'pinwire', parts: ['led', 'sensor'], program: 'alarma',
+        programBlocks: program([B('mb_forever', {}, { DO: stack(B('mb_ifelse', {}, { COND: putB(B('mb_compare', { OP: 'EQ' }, { A: put(B('mb_digital_read', { PIN: 'P1' })), B: num(1) })), DO: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(1) })), ELSE: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(0) })) })) })]),
+        prompt: `<p>Tito quiere una <b>alarma de choque</b> para el portón del depósito: cuando algo toca el <b>sensor de contacto</b>, se prende el LED. Conecta el <b>LED</b> y el <b>sensor</b>, dale energía y pruébalo.</p>
+          <p class="apec-tip">El sensor tiene 3 patas: <b>VCC</b> (energía), <b>GND</b> (tierra) y <b>OUT</b> (salida). Mira el programa: ¿en qué pin lee el sensor?</p>`,
+        fail: 'Revisa cada pata: VCC a 3V, GND a GND, OUT al pin que lee el programa, y el LED con su resistencia y sus polos bien puestos.',
       },
       {
-        id: 'm5-c', title: 'Programar el farol', type: 'mbsim', mode: 'code', pins: true, sensors: ['ext-light'],
-        prompt: `<p>El LED (P0) y el sensor de luz (P1) ya están conectados. Completa el programa para que el LED se <b>prenda cuando hay poca luz</b> y se <b>apague cuando hay mucha</b>.</p>
-          <p class="apec-tip"><code>pins.analog_read_pin(AnalogPin.P1)</code> devuelve de <b>0</b> (oscuro) a <b>1023</b> (mucha luz). Prueba moviendo la luz sobre el sensor.</p>`,
-        starter: 'def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz < ___:\n        pins.digital_write_pin(DigitalPin.P0, ___)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, ___)\nbasic.forever(para_siempre)\n',
+        id: 'm5-c', title: 'Programar el estacionamiento', type: 'mbsim', mode: 'code', pins: true, sensors: ['light'],
+        prompt: `<p>Práctica guiada del <b>estacionamiento</b>: el LED (en P0) se tiene que <b>prender cuando hay poca luz</b> (un auto tapa el sensor) y <b>apagar cuando hay mucha</b>.</p>
+          <p>Completa los bloques: pon un <b>umbral</b> en la comparación y los valores <b>1</b> (prender) y <b>0</b> (apagar). Prueba moviendo el <b>nivel de luz</b> de la placa (0 a 255).</p>`,
+        blockStarter: program([B('mb_forever', {}, { DO: stack(B('mb_ifelse', {}, { COND: putB(B('mb_compare', { OP: 'LT' }, { A: put(B('mb_light')), B: num(0) })), DO: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(0) })), ELSE: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(0) })) })) })]),
         check: async (sim) => {
-          sim.setExtLight(8);
-          await sim.advance(600);
+          sim.setLight(20);
+          await sim.advance(400);
           if (sim.error) return 'la placa dio un error.';
-          if (sim.pins.P0 !== 1) return 'con poca luz (casi oscuro) el LED tiene que estar prendido (1).';
-          sim.setExtLight(92);
-          await sim.advance(600);
-          if (sim.pins.P0 !== 0) return 'con mucha luz el LED tiene que apagarse (0).';
-          sim.setExtLight(10);
-          await sim.advance(600);
-          if (sim.pins.P0 !== 1) return 'cuando vuelve a oscurecer, el LED se tiene que prender otra vez. ¿Está dentro de basic.forever?';
+          if (sim.pins.P0 !== 1) return 'con poca luz (nivel 20, lugar ocupado) el LED tiene que estar prendido (1). ¿El umbral es mayor que 20?';
+          sim.setLight(230);
+          await sim.advance(400);
+          if (sim.pins.P0 !== 0) return 'con mucha luz (nivel 230, lugar libre) el LED tiene que apagarse (0). ¿El umbral es menor que 230?';
+          sim.setLight(25);
+          await sim.advance(400);
+          if (sim.pins.P0 !== 1) return 'cuando vuelve a llegar un auto, el LED se tiene que prender otra vez. ¿Está dentro de "para siempre"?';
           return true;
         },
-        require: [{ re: /analog_read_pin\s*\(\s*AnalogPin\.P1/, msg: 'El programa tiene que leer el sensor en el pin P1.' }],
+        require: [{ re: /input\.light_level\s*\(/, msg: 'El programa tiene que leer el sensor de luz (nivel de luz).' }],
       },
     ],
-    reflection: 'Si conectas un sensor y no funciona, ¿qué revisarías primero? Usa las palabras energía, GND y señal.',
+    reflection: 'Si conectas un sensor y no funciona, ¿qué revisarías primero? Usa las palabras energía, GND y OUT.',
   },
 
   /* ---------------------------------------------------------------- 5 */
@@ -872,14 +878,14 @@ export const BONUS = [
   },
   {
     id: 'b-iti-2', center: 'iti', title: 'Termómetro del taller', type: 'mbsim', mode: 'code', sensors: ['temperature'],
-    prompt: '<p>Programa la placa para que muestre la <b>temperatura</b> del taller <b>cada vez que se aprieta el botón B</b>. Pruébala moviendo el termómetro del simulador.</p>',
-    starter: 'def al_presionar_b():\n    # muestra la temperatura\n    pass\ninput.on_button_pressed(Button.___, al_presionar_b)\n',
+    prompt: '<p>Arma con bloques un programa que muestre la <b>temperatura</b> del taller <b>cada vez que se aprieta el botón B</b>. Pruébalo moviendo el termómetro del simulador.</p>',
+    blockStarter: program([B('mb_on_button', { BUTTON: 'A' }, {})]),
     check: async (sim) => {
       for (const t of [27, 12]) {
         sim.setTemperature(t);
         await sim.trigger('B');
         const last = sim.lastShown('number');
-        if (!last || Number(last.value) !== t) return `con ${t} °C, al apretar B la placa tiene que mostrar ${t}. Usa basic.show_number(input.temperature()).`;
+        if (!last || Number(last.value) !== t) return `con ${t} °C, al apretar B la placa tiene que mostrar ${t}. Usa "mostrar número" con "temperatura (°C)".`;
       }
       return true;
     },

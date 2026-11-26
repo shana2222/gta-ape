@@ -1,0 +1,4 @@
+Blockly 10.4.3 — Copyright Google LLC
+Licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
+https://github.com/google/blockly
+Archivos copiados sin cambios: blockly_compressed.js, msg-es.js (msg/es.js) y media/.

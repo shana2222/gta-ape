@@ -32,9 +32,9 @@ Al tercer intento fallido, la actividad sugiere volver a la explicación.
 | Misión | Contenido | Actividades |
 |---|---|---|
 | 1. El proceso computacional | Entrada → Proceso → Salida, algoritmo, secuencia/condición/repetición | Clasificar E/P/S · Ordenar un algoritmo · Identificar estructuras |
-| 2. La placa micro:bit | Placas programables: entradas, salidas, coordenadas de la matriz, eventos | 🟩 **Simulador**: explorar la placa usando sus entradas · programar una flecha con `led.plot` · programar un dado al sacudir |
+| 2. La placa micro:bit | Placas programables, sensores y actuadores, al iniciar / para siempre, eventos, coordenadas | 🟩 **Simulador con bloques**: explorar la placa usando sus entradas · dibujar una flecha con *graficar x y* · programar un dado con *si agitado* y *escoger al azar* |
 | 3. Periféricos y corriente | Periféricos E/S, conexiones (USB, HDMI, Bluetooth, pines), voltaje/corriente/resistencia, ley de Ohm | Clasificar periféricos · 🔌 **Simulador**: conectar cada dispositivo en su conector · ⚡ **Laboratorio de corriente** con amperímetro |
-| 4. LED y sensores en la placa | Energía, polos (+/−), tierra (GND), LED y sensor externo (VCC, GND, señal) conectados a la micro:bit | 🔌 **Simulador**: conectar el LED y darle energía · conectar un **sensor de luz** junto al LED (farol automático) · programar el farol con el sensor |
+| 4. LED y sensores en la placa | Pines digitales y analógicos, energía, polos y tierra (GND), LED con su resistencia (rojo 100 Ω), periféricos del kit de Ceibal | 🔌 **Simulador**: conectar el LED eligiendo la resistencia · conectar el **sensor de contacto/colisión** (VCC, GND, OUT) junto al LED · 🧩 programar con bloques la **práctica guiada del estacionamiento** |
 | 5. Entrenar y usar una IA | Machine Learning, ejemplos y etiquetas, confianza (%), sesgo, umbral | 🤖 **Simulador**: entrenar un clasificador de reciclaje · corregir el sesgo (perros y gatos) · **programar el robot con el % de confianza** |
 | 6. Python: primeros pasos | Lenguaje de programación, `print()`, tipos de datos | Programa con `print` · Clasificar tipos · Predecir la salida |
 | 7. Variables y entrada | Variables, `input()`, `int()`, `float()`, `str()` | Saludo personalizado · Arreglar el `TypeError` · Ticket del carrito de chivitos |
@@ -47,7 +47,7 @@ Son **27 actividades**. La nota del reporte es **(actividades logradas ÷ 27) ×
 
 | Centro | Personaje | Retos |
 |---|---|---|
-| 🤖 ITI | Profe Ohm | Carita en la matriz de LED · Termómetro con el botón B (simulador) |
+| 🤖 ITI | Profe Ohm | Carita en la matriz de LED · Termómetro con el botón B (bloques) |
 | 💻 Ceibal | Tecla | ¿Es IA o no? · Datos de prueba |
 | 📚 Liceo 29 | Profe Ada | Préstamo de la biblioteca (`if`) · Iniciales (`[0]` y `upper`) |
 | 🔐 INET | Profe Bit | Farol a pila: cablear pila, interruptor, resistencia y LED (simulador) · Ley de Ohm (desafío) |
@@ -87,6 +87,12 @@ El chip **📊 Nota** o el botón **📄 Mi reporte** abren el reporte. Con **�
 
 Todo se guarda **en el navegador del estudiante** (`localStorage`). No hay servidor ni cuentas. Si cambia de computadora o borra los datos del navegador, empieza de cero. Este juego usa claves propias (`gtaape.*`), así que no pisa el progreso del GTA SQL aunque estén publicados en el mismo GitHub.
 
+## Bloques de MakeCode
+
+Las actividades de placas se programan **con bloques**, como en MakeCode, con los mismos textos en español y los mismos colores: **Básico** (azul), **Entrada** (fucsia), **LED** (violeta), **Bucles** (verde), **Lógica** (turquesa), **Variables** (rojo), **Matemática** (morado) y **Pines** (rojo oscuro). Hay *al iniciar*, *para siempre*, *mostrar número / ícono / LEDs / cadena*, *pausa*, *al presionarse el botón*, *si agitado*, *nivel de luz*, *temperatura*, *graficar x y*, *repetir … veces*, *mientras*, *para index de 0 a …*, *cada … ms*, *si … entonces / si no*, comparaciones, *y / o / no*, *fijar … a*, *cambiar … por*, *escoger al azar de … a …*, *restante de*, *escritura digital pin*, *lectura digital / analógica pin*.
+
+El editor usa **Blockly** (la misma librería sobre la que está hecho MakeCode), incluida en `vendor/blockly/` para que funcione sin internet. Los bloques se traducen a Python de MakeCode (`src/ape/blocks-gen.js`) y corren en la micro:bit simulada. El botón **🐍 Ver en Python** muestra la traducción: sirve de puente con las misiones de Python. Las explicaciones muestran los bloques dibujados con sus colores.
+
 ## Simuladores de placas y circuitos
 
 En las misiones 2, 3, 4 y 5 la práctica se hace **dentro de un simulador**: el estudiante programa, conecta o arma algo y ve el resultado.
@@ -96,7 +102,7 @@ En las misiones 2, 3, 4 y 5 la práctica se hace **dentro de un simulador**: el 
 | 🟩 **micro:bit** | Escribe el programa en el Python de MakeCode, lo carga en una placa simulada y la usa con los botones A y B, **sacudir** y un **termómetro** deslizable. Tiene un LED externo en el pin 0 | Se prueba el programa en una placa de prueba: se aprietan botones, se sacude, se cambia la temperatura y se mira la matriz y el pin |
 | 🔌 **Conectores** | Conecta teclado, televisor, auriculares, micro:bit y LED en USB, HDMI, Bluetooth o pines | Cada dispositivo "funciona" al quedar en su conector |
 | ⚡ **Laboratorio de corriente** | Cambia la pila (1,5, 3 o 9 V) y la resistencia, y mira el amperímetro, la fórmula `I = (V − 2) ÷ R` y el brillo del LED | Explorar 4 combinaciones y dejar el LED entre 10 y 20 mA con 9 V |
-| 🔌 **Conectar a la placa** | Conecta un LED (pata larga / pata corta) y un sensor de luz (VCC, GND, señal) a los pines P0, P1, 3V y GND de la micro:bit, y le da energía con el USB | Detecta LED al revés, falta de tierra, LED directo a 3V, polos del sensor invertidos (avisa que se puede dañar), señal en otro pin y placa sin energía. El farol se prueba tapando e iluminando el sensor |
+| 🔌 **Conectar a la placa** | Elige la resistencia del LED rojo (100 Ω), conecta el LED (pata larga / pata corta) y el sensor de contacto (VCC, GND, OUT) a los pines P0, P1, 3V y GND de la micro:bit, y le da energía con el USB | Detecta resistencia equivocada, LED al revés, falta de tierra, LED directo a 3V, polos del sensor invertidos (avisa que se puede dañar), OUT en otro pin y placa sin energía. La alarma se prueba manteniendo presionado el sensor |
 | 🤖 **Entrenar una IA** | Pone ejemplos en cada clase, entrena y prueba con objetos nuevos. Ve el **% de confianza** de cada clase | La confianza sube con más ejemplos y baja con datos desbalanceados (sesgo). Meta: acertar con 80 % o más (75 % en el de sesgo) y sin ejemplos mal etiquetados |
 | 🏭 **Programar con el %** | Escribe en Python lo que hace el robot de reciclaje según `clase` y `confianza` | Se prueba con 7 objetos, incluidos los que tienen poca confianza (79 %, 61 %…) y uno justo en el umbral (80 %) |
 | 🔧 **Cableado a pila** (bonus INET) | Tiende cables entre la pila, el interruptor, la resistencia y el LED | Un solucionador de circuitos detecta circuito abierto, cortocircuito, LED al revés, LED quemado o LED encendido |
@@ -151,6 +157,8 @@ node --test tests/*.test.js
 | `src/ape/circuit-sim.js` | El solucionador de circuitos (desafío del INET) |
 | `src/ape/ml-sim.js` | El modelo de IA de los simuladores (confianza por clase, efecto de la cantidad y el balance de los datos) |
 | `src/ape/sim-ui.js` | La pantalla de los simuladores |
+| `src/ape/blocks.js` / `src/ape/blocks-gen.js` | Los bloques de MakeCode en español (Blockly) y su traducción a Python |
+| `vendor/blockly/` | Copia de Blockly 10.4.3 (Apache 2.0) |
 | `src/ape/pdf-report.js` | El PDF de portafolio (jsPDF desde cdnjs) |
 | `story/` | La historia en Markdown: misiones, personajes, objetos y mapa. La directiva `- APE: mision-N` abre la misión N |
 

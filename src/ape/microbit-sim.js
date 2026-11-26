@@ -112,9 +112,20 @@ export class MicrobitSim {
         }),
         show_number: func('show_number', async ([n]) => { await sim.#showText(pyStr(n), 'number', n); return null; }),
         show_string: func('show_string', async ([t]) => { await sim.#showText(pyStr(t), 'string', pyStr(t)); return null; }),
+        show_leds: func('show_leds', async ([pat]) => {
+          const rowsStr = String(pat).replace(/\s+/g, '').split('/');
+          const m = Array.from({ length: 5 }, (_, y) => Array.from({ length: 5 }, (_, x) => ((rowsStr[y] || '')[x] === '#' ? 1 : 0)));
+          sim.#setMatrix(m);
+          sim.#record('leds', pyStr(pat));
+          await sim.#sleep(400);
+          return null;
+        }),
         clear_screen: func('clear_screen', async () => { sim.#setMatrix(rows('...../...../...../...../.....')); sim.text = ''; sim.onChange(sim); return null; }),
         pause: func('pause', async ([ms]) => { await sim.#sleep(Math.max(0, num(ms))); return null; }),
         forever: func('forever', async ([fn]) => { sim.handlers.FOREVER.push(handlerOf(fn, 'basic.forever')); return null; }),
+      }),
+      loops: ns('loops', {
+        every_interval: func('every_interval', async ([ms, fn]) => { sim.handlers.FOREVER.push({ fn: handlerOf(fn, 'loops.every_interval'), every: Math.max(20, num(ms)) }); return null; }),
       }),
       led: ns('led', {
         plot: func('plot', async ([x, y]) => { const [X, Y] = xy(x, y); if (inside(X, Y)) { sim.leds[Y][X] = 1; sim.onChange(sim); } return null; }),
@@ -228,12 +239,14 @@ export class MicrobitSim {
     const end = this.clock + ms;
     const start = this.clock;
     let guard = 0;
-    for (const fn of this.handlers.FOREVER) {
+    for (const h of this.handlers.FOREVER) {
+      const fn = h.fn || h;
       this.clock = start;
       while (this.clock < end && !this.stopped && guard++ < 400) {
         const before = this.clock;
         await this.#call(fn);
-        if (this.clock === before) this.clock += 20;
+        if (h.every) this.clock += h.every;
+        else if (this.clock === before) this.clock += 20;
       }
     }
     this.clock = Math.max(this.clock, end);
@@ -241,13 +254,17 @@ export class MicrobitSim {
 
   /** Modo realtime: arranca los "para siempre" en paralelo hasta que se llame stop(). */
   startForever() {
-    for (const fn of this.handlers.FOREVER) {
+    for (const h of this.handlers.FOREVER) {
+      const fn = h.fn || h;
       (async () => {
         while (!this.stopped) {
           const before = this.clock;
           const ok = await this.#call(fn);
           if (!ok) break;
-          if (this.clock === before) { try { await this.#sleep(20); } catch { break; } }
+          try {
+            if (h.every) await this.#sleep(h.every);
+            else if (this.clock === before) await this.#sleep(20);
+          } catch { break; }
         }
       })();
     }

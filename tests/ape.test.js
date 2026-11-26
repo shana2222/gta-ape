@@ -138,28 +138,44 @@ async function verifyMb(p, code) {
   return (p.require || []).every((q) => q.re.test(codeWithoutComments(code)));
 }
 
+import { B, put, putB, num, stack, program, blocksToPython } from '../src/ape/blocks-gen.js';
+
+const plotAll = (pts) => stack(...pts.map(([x, y]) => B('mb_plot', {}, { X: num(x), Y: num(y) })));
 const MB_SOLUTIONS = {
-  'm3-b': ['led.plot(2, 0)\nfor x in range(1, 4):\n    led.plot(x, 1)\nled.plot(0, 2)\nled.plot(2, 2)\nled.plot(4, 2)\nled.plot(2, 3)\nled.plot(2, 4)', 'led.plot(2, 0)\nled.plot(2, 1)'],
-  'm3-c': ['def al_sacudir():\n    basic.show_number(randint(1, 6))\ninput.on_gesture(Gesture.SHAKE, al_sacudir)', 'def al_sacudir():\n    basic.show_number(randint(0, 9))\ninput.on_gesture(Gesture.SHAKE, al_sacudir)'],
-  'm5-c': ['def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz < 400:\n        pins.digital_write_pin(DigitalPin.P0, 1)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)', 'def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz > 400:\n        pins.digital_write_pin(DigitalPin.P0, 1)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)'],
-  'b-iti-2': ['def al_presionar_b():\n    basic.show_number(input.temperature())\ninput.on_button_pressed(Button.B, al_presionar_b)', 'def al_presionar_b():\n    basic.show_number(21)\ninput.on_button_pressed(Button.B, al_presionar_b)'],
+  'm3-b': [
+    program([B('mb_on_start', {}, { DO: plotAll([[2, 0], [1, 1], [2, 1], [3, 1], [0, 2], [2, 2], [4, 2], [2, 3], [2, 4]]) })]),
+    program([B('mb_on_start', {}, { DO: plotAll([[2, 0], [2, 1]]) })]),
+  ],
+  'm3-c': [
+    program([B('mb_on_gesture', { GESTURE: 'SHAKE' }, { DO: stack(B('mb_show_number', {}, { NUM: put(B('mb_random', {}, { FROM: num(1), TO: num(6) })) })) })]),
+    program([B('mb_on_gesture', { GESTURE: 'SHAKE' }, { DO: stack(B('mb_show_number', {}, { NUM: put(B('mb_random', {}, { FROM: num(0), TO: num(10) })) })) })]),
+  ],
+  'm5-c': [
+    program([B('mb_forever', {}, { DO: stack(B('mb_ifelse', {}, { COND: putB(B('mb_compare', { OP: 'LT' }, { A: put(B('mb_light')), B: num(100) })), DO: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(1) })), ELSE: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(0) })) })) })]),
+    program([B('mb_forever', {}, { DO: stack(B('mb_ifelse', {}, { COND: putB(B('mb_compare', { OP: 'GT' }, { A: put(B('mb_light')), B: num(100) })), DO: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(1) })), ELSE: stack(B('mb_digital_write', { PIN: 'P0' }, { VALUE: num(0) })) })) })]),
+  ],
+  'b-iti-2': [
+    program([B('mb_on_button', { BUTTON: 'B' }, { DO: stack(B('mb_show_number', {}, { NUM: put(B('mb_temperature')) })) })]),
+    program([B('mb_on_button', { BUTTON: 'A' }, { DO: stack(B('mb_show_number', {}, { NUM: put(B('mb_temperature')) })) })]),
+  ],
 };
 
-test('cada actividad de micro:bit acepta una solución y rechaza otra incorrecta', async () => {
+test('cada actividad de micro:bit con bloques acepta una solución y rechaza otra incorrecta', async () => {
   const mb = [...PHASES, ...BONUS].filter((p) => p.type === 'mbsim' && p.mode === 'code');
   assert.equal(mb.length, Object.keys(MB_SOLUTIONS).length);
   for (const p of mb) {
+    assert.ok(p.blockStarter, `${p.id} debería trabajar con bloques`);
     const [good, bad] = MB_SOLUTIONS[p.id];
-    assert.equal(await verifyMb(p, good), true, `${p.id}: la solución correcta no pasa`);
-    assert.equal(await verifyMb(p, bad), false, `${p.id}: la incorrecta pasa`);
-    assert.equal(await verifyMb(p, p.starter), false, `${p.id}: el código inicial ya pasa`);
+    assert.equal(await verifyMb(p, blocksToPython(good).code), true, `${p.id}: la solución correcta no pasa\n${blocksToPython(good).code}`);
+    assert.equal(await verifyMb(p, blocksToPython(bad).code), false, `${p.id}: la incorrecta pasa`);
+    assert.equal(await verifyMb(p, blocksToPython(p.blockStarter).code), false, `${p.id}: el programa inicial ya pasa`);
   }
 });
 
 test('explorar la placa: el programa cargado cumple las 4 metas con sus entradas', async () => {
   const p = PHASES.find((x) => x.id === 'm3-a');
   const sim = new MicrobitSim({ seed: 3 });
-  assert.equal(await sim.load(p.code), true);
+  assert.equal(await sim.load(blocksToPython(p.blocks).code), true);
   await sim.trigger('A'); await sim.trigger('B'); await sim.trigger('SHAKE');
   sim.setTemperature(35); await sim.advance(3000);
   assert.ok(p.goals.every((g) => g.done(sim)));
@@ -201,6 +217,8 @@ test('conexiones a la placa: polos, tierra, energía y sensor', async () => {
   if (!checkPinWiring) return; // sim-ui usa el DOM solo al dibujar; la función de chequeo es pura
   const led = [['L+', 'P0'], ['L-', 'GND']];
   assert.equal(checkPinWiring(led, ['led'], true).ok, true);
+  assert.match(checkPinWiring(led, ['led'], true, '10').msg, /100 Ω/);
+  assert.match(checkPinWiring(led, ['led'], true, '10k').msg, /casi no pasa/);
   assert.equal(checkPinWiring(led, ['led'], false).ok, false);
   assert.match(checkPinWiring([['L+', 'GND'], ['L-', 'P0']], ['led'], true).msg, /al revés/);
   assert.match(checkPinWiring([['L+', '3V'], ['L-', 'GND']], ['led'], true).msg, /siempre/);

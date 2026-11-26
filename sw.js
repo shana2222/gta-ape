@@ -1,4 +1,4 @@
-const SHELL_CACHE = 'gta-ape-shell-v4';
+const SHELL_CACHE = 'gta-ape-shell-v5';
 const ASSETS_CACHE = 'gta-ape-assets-v1';
 
 const IMAGE_EXT_RE = /\.(png|jpe?g|webp|gif|svg)$/i;

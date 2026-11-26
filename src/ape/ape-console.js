@@ -368,8 +368,9 @@ function activityShell(p, idx) {
   };
   const attempt = () => { progress.attempts[p.id] = (progress.attempts[p.id] || 0) + 1; save(KEY_PROGRESS, progress); return progress.attempts[p.id]; };
   const layout = ['python', 'predict'].includes(p.type) ? 'apec-split' : ['mbsim', 'wires', 'pinwire', 'ohm', 'ports', 'mltrain', 'mlprog'].includes(p.type) ? 'apec-sim' : 'apec-stack';
+  const wide = p.type === 'mbsim' && (p.blockStarter || p.blocks) ? ' apec-sim-wide' : '';
   const left = h('section', { class: 'apec-act-left' }, head, prompt, fb, h('div', { class: 'apec-act-actions' }, nextBtn, lessonBtn));
-  const wrap = h('div', { class: `apec-activity ${layout}` }, left, work);
+  const wrap = h('div', { class: `apec-activity ${layout}${wide}` }, left, work);
   ui.body.append(wrap);
   if (done) success(true);
   const onLeave = (fn) => leaveFns.push(fn);
