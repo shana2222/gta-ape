@@ -57,15 +57,6 @@ export const STREET_CHALLENGES = [
     thanks: '¡HOLA! Ahora le voy a poner mi nombre.',
   },
   {
-    id: 'polya', icon: '🧑‍🏫', who: 'Profe Marta', cry: '¿Te animas a una pregunta?',
-    story: 'La profe Marta prepara una clase sobre resolución de problemas.',
-    code: '',
-    question: '¿Cuál es la ÚLTIMA fase de Polya?',
-    type: 'choice', options: ['Examinar la solución', 'Comprender el problema', 'Concebir un plan', 'Ejecutar el plan'], answer: 0,
-    explain: 'Polya: comprender, planear, ejecutar y, al final, examinar (revisar) la solución.',
-    thanks: '¡Muy bien! Te ganaste un 12 imaginario.',
-  },
-  {
     id: 'len', icon: '🐍', who: 'Lucía', cry: '¿Cuántas letras tiene?',
     story: 'Lucía quiere saber cuántos caracteres tiene una palabra con Python.',
     code: 'palabra = "ceibal"\nprint(len(palabra))',

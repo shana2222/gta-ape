@@ -1,6 +1,6 @@
 ---
-id: 08-el-carrito
-title: Misión 8 — El carrito de chivitos
+id: 07-el-carrito
+title: Misión 7 — El carrito de chivitos
 start: COM-182
 pickup: PRACA-10
 pickup_objective: Busca la Libreta de Pedidos en PRACA-10
@@ -32,7 +32,7 @@ bg: Carrito de chivitos de Rayo
 - Rayo: Hice un programa que pide el precio, pero cuando sumo me pone cualquier cosa. ¡Me dio 3501 en vez de 351!
 - Byte: Porque input() siempre devuelve texto. Hay que convertirlo con int() antes de hacer cuentas.
 - Rayo: Texto, número… para mí todo es plata.
-- APE: mision-8
+- APE: mision-7
 - Rayo: ¡Las cuentas dan! Te invito un chivito. Bueno, medio.
 - Rayo: Tito anda diciendo que tiene una pista del apagón, pero está toda desordenada.
 - Byte: Para ordenar textos tengo las funciones de Python. Voy al puerto.

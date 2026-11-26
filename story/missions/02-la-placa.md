@@ -1,6 +1,6 @@
 ---
-id: 03-la-placa
-title: Misión 3 — La placa que habla
+id: 02-la-placa
+title: Misión 2 — La placa que habla
 start: COM-14
 pickup: PRACA-06
 pickup_objective: Busca la placa micro:bit en PRACA-06
@@ -32,7 +32,7 @@ bg: Base de la Cuadrilla de Reinicio
 - Vera: NÚCLEO usaba cientos de estas en la ciudad: en las paradas, en las plazas, en los faroles.
 - Byte: Es una placa programable. Tiene entradas, como los botones y los sensores, y salidas, como la matriz de LED.
 - Vera: Enséñale a NÚCLEO a usarla de nuevo. Primero mira cómo funciona.
-- APE: mision-3
+- APE: mision-2
 - Vera: La flecha quedó perfecta. Ya sé cómo vamos a señalizar el puerto.
 - Byte: Hablando de puerto… ¿quién guarda todos los equipos viejos de la ciudad?
 - Vera: Tito. Y Tito siempre sabe algo más. Ve con cuidado.

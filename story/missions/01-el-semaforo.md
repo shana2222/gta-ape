@@ -1,7 +1,7 @@
 ---
-id: 02-el-semaforo
-title: Misión 2 — El semáforo loco
-start: COM-96
+id: 01-el-semaforo
+title: Misión 1 — El semáforo loco
+start: CASA-01
 pickup: PRACA-04
 pickup_objective: Busca el Control del Semáforo en PRACA-04
 target: COM-14
@@ -14,15 +14,18 @@ wrong_item_message: Con eso no arreglo ni un semáforo de juguete.
 
 ## CUTSCENE_INICIO
 left: byte
-right: chispa
-bg: Taller de Chispa
+right: vera
+bg: Base de la Cuadrilla de Reinicio
 
-- Chispa: El semáforo de 18 de Julio se volvió loco: prende las tres luces juntas.
-- Byte: Seguro que NÚCLEO perdió su algoritmo.
-- Chispa: La caja de control quedó tirada en la PRACA-04. Llévasela a Rayo, en el Garaje Fénix (COM-14).
-- OPCAO: ¿Rayo sabe de semáforos? -> NEXT
-- OPCAO: Voy para allá. -> NEXT
-- Chispa: Rayo sabe manejar. De semáforos sabe… que existen. Por eso vas tú.
+- Vera: Así que tú eres Byte. Me dijeron que estás haciendo tu APE.
+- Byte: Sí. Tengo algunos temas de Computación pendientes. Quiero dejarlos aprendidos de verdad.
+- Vera: Perfecto, porque Santa Bruma también tiene temas pendientes. Anoche hubo un apagón y NÚCLEO, el sistema central, se reinició sin memoria.
+- Byte: ¿Y qué hay que hacer?
+- Vera: Volver a enseñarle todo, paso a paso: semáforos, placas, sensores, la radio, la IA… Y de paso, tú repasas.
+- OPCAO: ¿Por dónde empezamos? -> NEXT
+- OPCAO: ¿Quién causó el apagón? -> NEXT
+- Vera: Por lo más urgente: el semáforo de 18 de Julio se volvió loco y prende las tres luces juntas.
+- Vera: La caja de control quedó tirada en la PRACA-04. Llévasela a Rayo, en el Garaje Fénix (COM-14).
 
 ## CUTSCENE_FIM
 left: byte
@@ -35,7 +38,7 @@ bg: Garaje Fénix
 - Rayo: ¿Y esto cómo funciona por dentro?
 - Byte: Como toda computadora: recibe una entrada, la procesa y da una salida.
 - Rayo: Entrada, proceso, salida. Como yo con el mate: agua, espero, tomo.
-- APE: mision-2
+- APE: mision-1
 - Rayo: ¡Ahora cambia en orden! Primero verde, después amarillo, después rojo. Secuencia, ¿no?
 - Byte: Y cuando alguien aprieta el botón del peatón, hay una condición.
 - Rayo: Vera te espera en la base. Dice que encontró una placa rara.

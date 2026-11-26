@@ -79,7 +79,7 @@ test('inventário inicia com 1 página de 10 slots (2x5) e cria nova página ao 
 test('parser de itens e missões lê story/items/ e valida entrega do cuaderno na missão 01', () => {
   const cityMap = new CityMap();
   const manifest = parseStoryManifest(fs.readFileSync(path.join(storyDir, 'story.md'), 'utf8'), 'story.md');
-  assert.ok(manifest.items.includes('cuaderno-polya'));
+  assert.ok(manifest.items.includes('control-semaforo'));
 
   const itemsMap = new Map();
   for (const itemId of manifest.items) {
@@ -93,19 +93,19 @@ test('parser de itens e missões lê story/items/ e valida entrega do cuaderno n
   }
 
   const mission1 = parseMissionMarkdown(
-    fs.readFileSync(path.join(storyDir, 'missions', '01-el-apagon.md'), 'utf8'),
-    'missions/01-el-apagon.md',
+    fs.readFileSync(path.join(storyDir, 'missions', '01-el-semaforo.md'), 'utf8'),
+    'missions/01-el-semaforo.md',
     cityMap,
   );
-  assert.equal(mission1.pickupLocation, 'PRACA-01');
-  assert.equal(mission1.giveItem, 'cuaderno-polya');
-  assert.equal(mission1.requireItem, 'cuaderno-polya');
+  assert.equal(mission1.pickupLocation, 'PRACA-04');
+  assert.equal(mission1.giveItem, 'control-semaforo');
+  assert.equal(mission1.requireItem, 'control-semaforo');
   assert.ok(mission1.deliveryPrompt.length > 0);
   assert.ok(mission1.wrongItemMessage.length > 0);
-  assert.ok(mission1.outroCutscene.steps.some((step) => step.type === 'deliver' && step.itemId === 'cuaderno-polya'));
+  assert.ok(mission1.outroCutscene.steps.some((step) => step.type === 'deliver' && step.itemId === 'control-semaforo'));
 
   const assetUrls = collectStoryAssetUrls({ items: itemsMap, characters: new Map(), missions: [] });
-  assert.ok(assetUrls.includes('./story/assets/item-libreta.svg'));
+  assert.ok(assetUrls.includes('./story/assets/item-semaforo.svg'));
 });
 
 test('rejeita item sem campos obrigatórios ou caminho de imagem externo', () => {

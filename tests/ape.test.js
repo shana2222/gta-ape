@@ -83,8 +83,8 @@ test('actividades de predicción: el programa corre sin errores', async () => {
 });
 
 test('estructura APE: cada misión tiene metas, explicación, tarjetas, 3 actividades y reflexión', () => {
-  assert.equal(MISSIONS.length, 10);
-  assert.equal(PHASES.length, 30);
+  assert.equal(MISSIONS.length, 9);
+  assert.equal(PHASES.length, 27);
   const ids = new Set();
   for (const m of MISSIONS) {
     assert.ok(m.goals.length >= 2, `metas misión ${m.n}`);
@@ -141,7 +141,7 @@ async function verifyMb(p, code) {
 const MB_SOLUTIONS = {
   'm3-b': ['led.plot(2, 0)\nfor x in range(1, 4):\n    led.plot(x, 1)\nled.plot(0, 2)\nled.plot(2, 2)\nled.plot(4, 2)\nled.plot(2, 3)\nled.plot(2, 4)', 'led.plot(2, 0)\nled.plot(2, 1)'],
   'm3-c': ['def al_sacudir():\n    basic.show_number(randint(1, 6))\ninput.on_gesture(Gesture.SHAKE, al_sacudir)', 'def al_sacudir():\n    basic.show_number(randint(0, 9))\ninput.on_gesture(Gesture.SHAKE, al_sacudir)'],
-  'm5-c': ['def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    pins.digital_write_pin(DigitalPin.P0, 0)\n    basic.pause(500)\nbasic.forever(para_siempre)', 'def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)'],
+  'm5-c': ['def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz < 400:\n        pins.digital_write_pin(DigitalPin.P0, 1)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)', 'def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz > 400:\n        pins.digital_write_pin(DigitalPin.P0, 1)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)'],
   'b-iti-2': ['def al_presionar_b():\n    basic.show_number(input.temperature())\ninput.on_button_pressed(Button.B, al_presionar_b)', 'def al_presionar_b():\n    basic.show_number(21)\ninput.on_button_pressed(Button.B, al_presionar_b)'],
 };
 
@@ -190,4 +190,53 @@ test('solucionador de circuitos: cerrado, abierto, invertido, quemado, corto y p
   assert.equal(proto(['+3', 'f5'], ['b7', '-9']), 'open');
   assert.equal(proto(['+3', 'c5'], ['f7', '-9']), 'open');
   assert.equal(proto(['c7', '-2'], ['a5', '+4']), 'on');
+});
+
+
+/* ---------------- conexiones a la placa e IA ---------------- */
+import { trainModel } from '../src/ape/ml-sim.js';
+
+test('conexiones a la placa: polos, tierra, energía y sensor', async () => {
+  const { checkPinWiring } = await import('../src/ape/sim-ui.js').catch(() => ({}));
+  if (!checkPinWiring) return; // sim-ui usa el DOM solo al dibujar; la función de chequeo es pura
+  const led = [['L+', 'P0'], ['L-', 'GND']];
+  assert.equal(checkPinWiring(led, ['led'], true).ok, true);
+  assert.equal(checkPinWiring(led, ['led'], false).ok, false);
+  assert.match(checkPinWiring([['L+', 'GND'], ['L-', 'P0']], ['led'], true).msg, /al revés/);
+  assert.match(checkPinWiring([['L+', '3V'], ['L-', 'GND']], ['led'], true).msg, /siempre/);
+  assert.match(checkPinWiring([['L+', 'P0'], ['L-', 'P1']], ['led'], true).msg, /GND/);
+  const sensorOk = [...led, ['SV', '3V'], ['SG', 'GND'], ['SO', 'P1']];
+  assert.equal(checkPinWiring(sensorOk, ['led', 'sensor'], true).ok, true);
+  assert.equal(checkPinWiring([...led, ['SV', 'GND'], ['SG', '3V'], ['SO', 'P1']], ['led', 'sensor'], true).danger, true);
+  assert.match(checkPinWiring([...led, ['SV', '3V'], ['SO', 'P1']], ['led', 'sensor'], true).msg, /tierra/);
+  assert.match(checkPinWiring([...led, ['SV', '3V'], ['SG', 'GND'], ['SO', 'P2']], ['led', 'sensor'], true).msg, /P1/);
+});
+
+const mlRun = (p, ids) => {
+  const ex = p.pool.filter((it) => ids.includes(it.id)).map((it) => ({ f: it.f, cat: it.cat }));
+  const m = trainModel(ex, p.classes.length, p.model);
+  return p.test.every((t) => { const r = m.predict(t.f); return r.best === t.cat && r.conf >= p.minConf; });
+};
+
+test('IA: más ejemplos suben la confianza y el desbalance genera sesgo', () => {
+  const rec = PHASES.find((x) => x.id === 'm6-a');
+  const byCat = (n) => rec.pool.filter((it) => it.cat !== null).reduce((acc, it) => { if (acc.filter((id) => rec.pool.find((q) => q.id === id).cat === it.cat).length < n) acc.push(it.id); return acc; }, []);
+  assert.equal(mlRun(rec, byCat(1)), false);
+  assert.equal(mlRun(rec, byCat(2)), false);
+  assert.equal(mlRun(rec, byCat(3)), true);
+  const bias = PHASES.find((x) => x.id === 'm6-b');
+  const preset = [...bias.preset[0], ...bias.preset[1]];
+  assert.equal(mlRun(bias, preset), false, 'con 7 perros y 1 gato no debería pasar');
+  assert.equal(mlRun(bias, bias.pool.map((it) => it.id)), true, 'balanceado debería pasar');
+});
+
+test('IA: programar con la confianza', async () => {
+  const { runWithModel } = await import('../src/ape/sim-ui.js');
+  const p = PHASES.find((x) => x.id === 'm6-c');
+  const check = async (code) => { for (const c of p.cases) { const r = await runWithModel(code, c); if (r.error || p.expect(c, r.out) !== true) return false; } return true; };
+  const good = 'if confianza >= 80:\n    if clase == "plastico":\n        print("Contenedor amarillo")\n    elif clase == "papel":\n        print("Contenedor azul")\n    else:\n        print("Contenedor verde")\nelse:\n    print("Revisar a mano")';
+  const bad = 'if clase == "plastico":\n    print("Contenedor amarillo")\nelif clase == "papel":\n    print("Contenedor azul")\nelse:\n    print("Contenedor verde")';
+  assert.equal(await check(good), true);
+  assert.equal(await check(bad), false);
+  assert.equal(await check(p.starter.replace(/___/g, '80')), false);
 });

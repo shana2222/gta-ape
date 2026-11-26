@@ -1,6 +1,6 @@
 ---
-id: 10-el-reinicio
-title: Misión 10 — El gran reinicio
+id: 09-el-reinicio
+title: Misión 9 — El gran reinicio
 start: CASA-181
 pickup: PRACA-12
 pickup_objective: Busca la Batería de NÚCLEO en PRACA-12
@@ -33,10 +33,10 @@ bg: Base de la Cuadrilla de Reinicio
 - Vera: ¿Al revés?
 - Byte: Tenía que apagar la ciudad cuando la batería estaba BAJA, menor a 20. Pero escribieron mayor. Con la batería llena, ¡apagó todo!
 - Vera: ¿Y quién lo escribió?
-- Chispa: …Yo. Lo programé apurada. Ejecuté el plan y me salteé la fase 4: revisar.
+- Chispa: …Yo. Lo programé apurada y no lo probé antes de cargarlo. Nunca revisé si funcionaba.
 - Vera: Chispa. Gracias a ese error, Byte repasó todo el curso y la ciudad aprendió de nuevo.
 - Byte: Arreglemos el if y, de paso, programemos la historia del apagón para los chicos de la escuela.
-- APE: mision-10
+- APE: mision-9
 - Vera: Santa Bruma vuelve a tener luz. Y tú, Byte, completaste tu APE.
 - Byte: Lo mejor es que ahora lo sé explicar. Y siempre voy a revisar mi solución.
 - Vera: Desde hoy eres parte oficial de la Cuadrilla de Reinicio. ¡Bienvenida!

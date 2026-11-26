@@ -1,6 +1,6 @@
 ---
-id: 07-la-radio
-title: Misión 7 — Radio Santa Bruma
+id: 06-la-radio
+title: Misión 6 — Radio Santa Bruma
 start: CASA-84
 pickup: PRACA-08
 pickup_objective: Busca el Guion de la Radio en PRACA-08
@@ -32,7 +32,7 @@ bg: Radio Santa Bruma
 - Kernel: La radio ahora la maneja un programa en Python. Para salir al aire hay que mostrar mensajes con print().
 - Byte: ¿Y Python es difícil?
 - Kernel: Es un lenguaje de programación: tiene reglas estrictas, pero se parece al inglés. Lo importante es entender los tipos de datos.
-- APE: mision-7
+- APE: mision-6
 - Kernel: print("¡Estamos al aire!"). Gracias, Byte.
 - Kernel: El programa de NÚCLEO del pendrive usa variables e input(). Rayo tenía el mismo problema con su carrito.
 - Byte: Voy al garaje. Igual tengo hambre.

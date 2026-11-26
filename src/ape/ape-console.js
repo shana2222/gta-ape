@@ -5,13 +5,13 @@ import { runPython, Interpreter, PyError } from './python-mini.js';
 import { downloadProgressPdf } from './pdf-report.js';
 import { computeBadges, earnedIds } from './badges.js';
 import { STREET_CHALLENGES, getStreetChallenge, normalizeAnswer } from './street-challenges.js';
-import { renderMbsim, renderPorts, renderOhm, renderWires, renderProto } from './sim-ui.js';
+import { renderMbsim, renderPorts, renderOhm, renderWires, renderPinwire, renderMltrain, renderMlprog } from './sim-ui.js';
 
 /* limpieza de simuladores al cambiar de pantalla */
 let leaveFns = [];
 function runLeave() { const fns = leaveFns; leaveFns = []; fns.forEach((f) => { try { f(); } catch { /* nada */ } }); }
 
-const KEY_PROGRESS = 'gtaape.progress.v1';
+const KEY_PROGRESS = 'gtaape.progress.v2';
 const KEY_STUDENT = 'gtaape.student.v1';
 const KEY_THEME = 'gtaape.theme.v1';
 const KEY_PRIORITY = 'gtaape.priority.v1';
@@ -367,7 +367,7 @@ function activityShell(p, idx) {
     computeBadges(progress).filter((b) => b.earned && !before.has(b.id)).forEach((b, i) => setTimeout(() => showToast(`🏅 ¡Nueva insignia: ${b.icon} ${b.name}! Mírala en tu inventario.`), 500 + i * 2900));
   };
   const attempt = () => { progress.attempts[p.id] = (progress.attempts[p.id] || 0) + 1; save(KEY_PROGRESS, progress); return progress.attempts[p.id]; };
-  const layout = ['python', 'predict'].includes(p.type) ? 'apec-split' : ['mbsim', 'wires', 'proto', 'ohm', 'ports'].includes(p.type) ? 'apec-sim' : 'apec-stack';
+  const layout = ['python', 'predict'].includes(p.type) ? 'apec-split' : ['mbsim', 'wires', 'pinwire', 'ohm', 'ports', 'mltrain', 'mlprog'].includes(p.type) ? 'apec-sim' : 'apec-stack';
   const left = h('section', { class: 'apec-act-left' }, head, prompt, fb, h('div', { class: 'apec-act-actions' }, nextBtn, lessonBtn));
   const wrap = h('div', { class: `apec-activity ${layout}` }, left, work);
   ui.body.append(wrap);
@@ -392,9 +392,9 @@ function renderActivity(p, idx) {
     saveCode: (id, v) => { progress.code[id] = v; save(KEY_PROGRESS, progress); },
     loadCode: (id) => progress.code[id] ?? null,
   };
-  const SIMS = { mbsim: renderMbsim, ports: renderPorts, ohm: renderOhm, wires: renderWires, proto: renderProto };
+  const SIMS = { mbsim: renderMbsim, ports: renderPorts, ohm: renderOhm, wires: renderWires, pinwire: renderPinwire, mltrain: renderMltrain, mlprog: renderMlprog };
   if (SIMS[p.type]) { SIMS[p.type](p, ctx, simHelpers); return; }
-  const R = { order: renderOrder, classify: renderClassify, choice: renderChoice, led: renderLed, ml: renderMl, predict: renderPredict, python: renderPython };
+  const R = { order: renderOrder, classify: renderClassify, choice: renderChoice, led: renderLed, predict: renderPredict, python: renderPython };
   (R[p.type] || renderChoice)(p, ctx);
 }
 
@@ -509,47 +509,6 @@ function renderLed(p, ctx) {
   } }, '✔ Comprobar dibujo');
   const clear = h('button', { type: 'button', class: 'sqlc-btn', onclick: () => { on.clear(); cells.forEach((c) => { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); }); } }, 'Borrar todo');
   ctx.work.append(board, h('div', { class: 'apec-row' }, check, clear));
-}
-
-/* ---- entrenar un modelo de ML ---- */
-function renderMl(p, ctx) {
-  const labels = {};
-  if (ctx.done) p.train.forEach((t, i) => { labels[i] = t.cat; });
-  const trainBox = h('div', { class: 'apec-classify' });
-  const draw = () => {
-    trainBox.replaceChildren(...p.train.map((t, i) => h('div', { class: 'apec-cl-row', 'data-i': i },
-      h('div', { class: 'apec-cl-text' }, h('span', { class: 'apec-ml-ex', 'aria-hidden': 'true' }, `#${i + 1}`), ` Fruta ${t.label}`),
-      h('div', { class: 'apec-cl-opts', role: 'radiogroup', 'aria-label': `Etiqueta para la fruta ${t.label}` }, p.classes.map((c, ci) => h('button', {
-        type: 'button', role: 'radio', 'aria-checked': String(labels[i] === ci), class: `apec-pill ${labels[i] === ci ? 'on' : ''}`,
-        onclick: () => { labels[i] = ci; draw(); trainBox.querySelector(`[data-i="${i}"] .apec-pill.on`)?.focus(); results.replaceChildren(); },
-      }, c))))));
-  };
-  draw();
-  const results = h('div', { class: 'apec-ml-results', 'aria-live': 'polite' });
-  const train = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-primary', onclick: async () => {
-    const missing = p.train.filter((_, i) => labels[i] === undefined).length;
-    if (missing) { ctx.fail(`Antes de entrenar, etiqueta todos los ejemplos (faltan ${missing}).`); return; }
-    results.replaceChildren(h('p', { class: 'apec-ml-training' }, '🧠 Entrenando el modelo… buscando patrones en tus ejemplos'));
-    train.disabled = true;
-    await new Promise((r) => setTimeout(r, 900));
-    train.disabled = false;
-    // modelo: vecino más cercano (k = 1) con las etiquetas del estudiante
-    const predict = (f) => {
-      let best = null;
-      p.train.forEach((t, i) => { const d = Math.hypot(...t.f.map((v, j) => v - f[j])); if (!best || d < best.d) best = { d, cat: labels[i] }; });
-      return best.cat;
-    };
-    let hits = 0;
-    const rows = p.test.map((t) => { const pr = predict(t.f); const ok = pr === t.cat; if (ok) hits += 1; return h('li', { class: ok ? 'ok' : 'bad' }, `Fruta ${t.label} → el modelo dice ${p.classes[pr]} ${ok ? '✔' : '✖'}`); });
-    const allLabels = p.train.every((t, i) => labels[i] === t.cat);
-    results.replaceChildren(h('p', {}, h('b', {}, `Prueba con frutas nuevas: ${hits} de ${p.test.length} aciertos`)), h('ul', { class: 'apec-ml-list' }, rows));
-    if (hits === p.test.length && !allLabels) {
-      verdict(ctx, false, 'El modelo acertó, pero algunos ejemplos de entrenamiento tienen la etiqueta equivocada. Un modelo entrenado con etiquetas malas falla con otras frutas: corrígelas.');
-      return;
-    }
-    verdict(ctx, hits === p.test.length && allLabels, p.fail);
-  } }, '🧠 Entrenar y probar');
-  ctx.work.append(h('p', { class: 'apec-muted' }, '1) Etiqueta cada fruta de entrenamiento. 2) Entrena. 3) Mira cómo le va con frutas nuevas.'), trainBox, h('div', { class: 'apec-row' }, train), results);
 }
 
 /* ---- predecir la salida ---- */

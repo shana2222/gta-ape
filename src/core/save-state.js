@@ -1,4 +1,4 @@
-export const SAVE_STORAGE_KEY = 'gta-ape-save-v1';
+export const SAVE_STORAGE_KEY = 'gta-ape-save-v2';
 
 function getDefaultStorage() {
   if (typeof window !== 'undefined' && window.localStorage) {

@@ -62,6 +62,7 @@ export class MicrobitSim {
     this.leds = Array.from({ length: 5 }, () => Array(5).fill(0));
     this.temperature = 21;
     this.light = 128;
+    this.extLight = 70; // % de luz que ve el sensor externo conectado en P1
     this.pins = { P0: 0, P1: 0, P2: 0 };
     this.pinLog = [];
     this.shown = []; // { kind, value, t }
@@ -133,6 +134,12 @@ export class MicrobitSim {
         digital_write_pin: func('digital_write_pin', async ([p, v]) => { sim.#writePin(keyOf(p, 'DigitalPin'), num(v) ? 1 : 0); return null; }),
         analog_write_pin: func('analog_write_pin', async ([p, v]) => { sim.#writePin(keyOf(p, 'AnalogPin'), Math.max(0, Math.min(1023, num(v))) / 1023); return null; }),
         digital_read_pin: func('digital_read_pin', async ([p]) => (sim.pins[keyOf(p, 'DigitalPin')] ? 1 : 0)),
+        analog_read_pin: func('analog_read_pin', async ([p]) => {
+          const k = keyOf(p, 'AnalogPin');
+          if (k !== 'P1') return 0;
+          sim.inputsUsed.add('sensor-p1');
+          return Math.round(sim.extLight * 10.23); // sensor de luz externo en P1: 0 (oscuro) a 1023 (mucha luz)
+        }),
       }),
       music: ns('music', {
         play_tone: func('play_tone', async ([, ms]) => { sim.#record('sound', 'tono'); await sim.#sleep(num(ms ?? 200)); return null; }),
@@ -214,6 +221,7 @@ export class MicrobitSim {
 
   setTemperature(v) { this.temperature = v; this.inputsUsed.add('temperature-set'); this.onChange(this); }
   setLight(v) { this.light = v; this.inputsUsed.add('light-set'); this.onChange(this); }
+  setExtLight(v) { this.extLight = v; this.onChange(this); }
 
   /** Modo rápido: corre los "para siempre" durante `ms` de reloj virtual. */
   async advance(ms) {

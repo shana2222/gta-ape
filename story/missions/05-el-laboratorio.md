@@ -1,6 +1,6 @@
 ---
-id: 06-el-laboratorio
-title: Misión 6 — El laboratorio de IA
+id: 05-el-laboratorio
+title: Misión 5 — El laboratorio de IA
 start: COM-96
 pickup: PRACA-07
 pickup_objective: Busca el Pendrive de Datos en PRACA-07
@@ -29,11 +29,11 @@ bg: Laboratorio de IA de la Colina
 - Pixel: Hola, Byte. ¿Trajiste los datos?
 - Byte: Acá están:
 - ENTREGAR: pendrive-datos
-- Pixel: La balanza inteligente de la feria reconocía frutas. Desde el apagón confunde manzanas con bananas.
+- Pixel: La cinta de reciclaje reconocía plástico, papel y vidrio. Desde el apagón no reconoce nada: hay que entrenarla de nuevo.
 - Byte: ¿Se olvidó de lo que aprendió?
-- Pixel: Peor: alguien le cargó ejemplos mal etiquetados. Un modelo aprende de los datos que le das. Si los datos están mal…
+- Pixel: Y el modelo de la veterinaria tiene sesgo: lo entrenaron con muchos perros y casi ningún gato. Un modelo aprende de los datos que le das. Si los datos están mal…
 - Byte: …el modelo aprende mal. Basura entra, basura sale.
-- APE: mision-6
-- Pixel: ¡Entrenado y probado! La feria va a estar feliz.
+- APE: mision-5
+- Pixel: ¡Entrenado, probado y programado! Ahora el robot solo actúa cuando está seguro.
 - Pixel: Encontré otra cosa en el pendrive: un programa en Python de NÚCLEO. Kernel, en la radio, lee Python mejor que nadie.
 - Byte: Voy a la radio. Además, la ciudad necesita noticias.

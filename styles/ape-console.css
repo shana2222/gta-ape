@@ -441,29 +441,58 @@
 @media (max-width: 640px) { .apec-wires svg { min-width: 460px; } }
 .apec-mb-layout .apec-codeview .apec-code { font-size: 14px; }
 
-/* protoboard */
-.apec-proto-wrap { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: start; }
-@media (max-width: 640px) { .apec-proto-wrap { grid-template-columns: 1fr; } }
-.apec-proto-battery { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 12px; padding: 10px; font-weight: 800; }
-.apec-proto-battery small { font-weight: 500; color: var(--c-muted); font-size: 12px; }
-.apec-proto-bulb { font-size: 34px; filter: grayscale(1) opacity(0.5); transition: filter 0.2s ease-out; }
-.apec-proto-bulb.on { filter: drop-shadow(0 0 12px rgb(255, 60, 60)); }
-.apec-proto-bulb.burnt::after { content: '💥'; }
-.apec-proto-scroll { overflow-x: auto; }
-.apec-proto-board { display: inline-flex; flex-direction: column; gap: 3px; background: rgb(236, 233, 224); border-radius: 12px; padding: 10px; color: rgb(60, 60, 60); }
-.apec-proto-row { display: flex; gap: 3px; align-items: center; }
-.apec-proto-row.rail.plus { border-bottom: 2px solid rgb(220, 40, 40); }
-.apec-proto-row.rail.minus { border-bottom: 2px solid rgb(40, 90, 220); margin-bottom: 6px; }
-.apec-proto-lbl { width: 22px; text-align: center; font: 700 11px var(--font-code); color: rgb(100, 100, 100); flex-shrink: 0; }
-.apec-proto-row.head .apec-proto-lbl { height: 14px; }
-.apec-proto-gap { height: 16px; margin: 2px 0; background: rgb(214, 209, 196); border-radius: 4px; font: 700 9px var(--font-code); color: rgb(140, 135, 120); text-align: center; letter-spacing: 0.2em; }
-.apec-hole {
-  width: 22px; height: 22px; flex-shrink: 0; border-radius: 4px; border: 1px solid rgb(190, 185, 170); background: rgb(60, 60, 60);
-  cursor: pointer; padding: 0; font: 800 11px var(--font-code); color: rgb(255, 255, 255); display: grid; place-items: center;
-}
-.apec-hole.rail { background: rgb(80, 80, 80); }
-.apec-hole.net { box-shadow: 0 0 0 3px rgba(0, 200, 230, 0.75); }
-.apec-hole.has.r { background: rgb(210, 150, 40); color: rgb(40, 20, 0); }
-.apec-hole.has.w { background: rgb(20, 20, 20); border-color: rgb(0, 0, 0); }
-.apec-hole.has.led { background: rgb(230, 50, 50); }
-.apec-hole:focus-visible { outline: 3px solid rgb(255, 176, 0); }
+/* conexiones a la placa */
+.apec-pinwire svg { max-height: 360px; }
+.apec-pinwire.danger { border-color: var(--c-fail); box-shadow: 0 0 0 3px var(--c-fail-bg); }
+.apec-pad .apec-pad-rect { fill: rgb(212, 160, 23); stroke: rgb(120, 90, 10); stroke-width: 2; }
+.apec-pad .apec-pad-text { fill: rgb(40, 30, 0); }
+.apec-pad:hover .apec-pad-rect, .apec-pad:focus .apec-pad-rect { fill: rgb(240, 200, 80); }
+.apec-pad.sel .apec-pad-rect { fill: rgb(0, 220, 240); stroke: rgb(255, 255, 255); stroke-width: 3; }
+.apec-pinwire-prog { margin-bottom: 10px; }
+.apec-pinwire-prog .apec-code { font-size: 13.5px; }
+
+/* IA: entrenar */
+.apec-ml-steps { display: flex; gap: 6px; list-style: none; padding: 0; margin: 0 0 10px; counter-reset: st; flex-wrap: wrap; }
+.apec-ml-steps li { counter-increment: st; background: var(--c-panel-2); border: 1px solid var(--c-border); border-radius: 999px; padding: 4px 12px; font-size: 13px; font-weight: 700; }
+.apec-ml-steps li::before { content: counter(st) '. '; color: var(--c-accent); }
+.apec-ml-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 1100px) { .apec-ml-grid { grid-template-columns: 1fr; } }
+.apec-ml-head { font-weight: 800; margin: 4px 0 8px; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.apec-ml-pool { background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 14px; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; align-content: start; }
+.apec-ml-pool .apec-ml-head, .apec-ml-pool > p { grid-column: 1 / -1; }
+.apec-ml-tile { display: flex; flex-direction: column; align-items: center; gap: 4px; background: var(--c-panel-2); border: 1px solid var(--c-border); border-radius: 12px; padding: 8px; text-align: center; font: inherit; color: var(--c-text); }
+.apec-ml-tile.test { cursor: pointer; min-width: 110px; }
+.apec-ml-tile.test:hover { border-color: var(--c-accent); }
+.apec-ml-emoji { font-size: 32px; line-height: 1.1; }
+.apec-ml-tile small { font-size: 12.5px; color: var(--c-muted); }
+.apec-ml-send { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; }
+.apec-ml-send .apec-pill { font-size: 12px; min-height: 30px; padding: 3px 8px; }
+.apec-ml-classes { display: grid; gap: 8px; align-content: start; }
+.apec-ml-class { background: var(--c-panel); border: 2px dashed var(--c-border); border-radius: 14px; padding: 8px 10px; }
+.apec-ml-count { font-size: 12px; color: var(--c-muted); font-weight: 700; }
+.apec-ml-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.apec-ml-chip { font: inherit; font-size: 13px; border-radius: 999px; padding: 4px 10px; border: 1px solid var(--c-border); background: var(--c-panel-2); color: var(--c-text); cursor: pointer; }
+.apec-ml-chip:hover { border-color: var(--c-fail); }
+.apec-ml-bar { flex: 1; min-width: 120px; height: 10px; background: var(--c-border); border-radius: 99px; overflow: hidden; }
+.apec-ml-bar i { display: block; height: 100%; width: 0; background: var(--c-neon); transition: width 0.08s linear; }
+.apec-ml-tests { margin-top: 12px; }
+.apec-ml-testrow { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.apec-ml-bars { display: grid; gap: 6px; margin: 8px 0; }
+.apec-ml-barrow { display: grid; grid-template-columns: 110px 1fr 52px; gap: 8px; align-items: center; font-size: 14px; }
+.apec-ml-track { height: 14px; background: var(--c-border); border-radius: 99px; overflow: hidden; }
+.apec-ml-track i { display: block; height: 100%; background: var(--c-muted); border-radius: 99px; }
+.apec-ml-barrow.best .apec-ml-track i { background: var(--c-success); }
+.apec-ml-barrow.best b { color: var(--c-success); }
+.apec-ml-line { padding: 6px 10px; border-radius: 8px; border: 1px solid var(--c-border); margin-bottom: 6px; background: var(--c-panel); }
+.apec-ml-line.ok { border-color: var(--c-success); }
+.apec-ml-line.bad { border-color: var(--c-fail); background: var(--c-fail-bg); }
+
+/* IA: programar con la confianza */
+.apec-ml-camera { background: rgb(5, 8, 12); color: rgb(230, 237, 243); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 2px solid rgb(0, 220, 240); }
+.apec-ml-camera .apec-ml-bars { width: 100%; }
+.apec-ml-camera .apec-ml-track { background: rgb(48, 54, 61); }
+.apec-ml-cam-emoji { font-size: 54px; }
+.apec-ml-vars { font-family: var(--font-code); font-size: 13px; color: rgb(255, 200, 80); background: rgb(22, 27, 34) !important; border: 0 !important; }
+.apec-ml-action { margin-top: 10px; padding: 12px; border-radius: 12px; background: var(--c-panel); border: 1px solid var(--c-border); font-weight: 800; font-size: 17px; min-height: 48px; }
+
+@media (max-width: 640px) { .apec-pinwire svg { min-width: 0; } }

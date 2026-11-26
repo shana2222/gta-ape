@@ -1,6 +1,6 @@
 ---
-id: 05-el-farol
-title: Misión 5 — El farol de la plaza
+id: 04-el-farol
+title: Misión 4 — El farol de la plaza
 start: CASA-181
 pickup: PRACA-16
 pickup_objective: Busca el Kit de LED en PRACA-16
@@ -29,10 +29,10 @@ bg: Taller de Chispa
 - Chispa: ¡Un kit nuevo! Los LED de anoche se me quemaron todos.
 - Byte: Tito me contó. Toma:
 - ENTREGAR: kit-led
-- Chispa: Quería arreglar el farol de la plaza, pero conecté los LED sin resistencia. ¡Puf! Humo.
-- Byte: El LED necesita algo que frene la corriente. Y hay que conectarlo con la pata larga hacia el positivo.
-- Chispa: ¿Me ayudas a armarlo bien? Primero en el simulador, como en Tinkercad.
-- APE: mision-5
-- Chispa: ¡Prendió! Y no se quemó. Ahora entiendo por qué la resistencia es importante.
+- Chispa: Quería hacer un farol automático con la micro:bit, pero conecté el sensor con los polos al revés. ¡Puf! Humo.
+- Byte: Hay que respetar los polos: la pata larga del LED al pin, la corta a GND. Y el sensor: VCC a 3V, GND a GND y la señal a un pin.
+- Chispa: ¿Me ayudas a conectarlo bien? Primero en el simulador, como en Tinkercad.
+- APE: mision-4
+- Chispa: ¡Oscurece y el farol se prende solo! Ahora entiendo para qué sirve la tierra.
 - Byte: Pero quemar unos LED no apaga una ciudad entera. El apagón fue otra cosa.
 - Chispa: Pixel, en el laboratorio de la colina, revisa los datos de NÚCLEO. Llévale el pendrive que está en la PRACA-07.

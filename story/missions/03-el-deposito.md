@@ -1,6 +1,6 @@
 ---
-id: 04-el-deposito
-title: Misión 4 — El depósito del puerto
+id: 03-el-deposito
+title: Misión 3 — El depósito del puerto
 start: CASA-01
 pickup: PRACA-13
 pickup_objective: Busca la Caja de Periféricos en PRACA-13
@@ -32,6 +32,6 @@ bg: Depósito de Tito en el Puerto
 - Tito: Está todo mezclado. Si me ayudas a ordenarlo, te cuento un chisme del apagón.
 - Byte: Trato hecho. Entrada, salida, entrada y salida… y también reviso las conexiones.
 - Tito: Y la corriente, que acá todo chispea.
-- APE: mision-4
+- APE: mision-3
 - Tito: Ordenadito. Ahora el chisme: la noche del apagón vi a Chispa con un montón de LED en la mano.
 - Byte: ¿Chispa? Voy a llevarle un kit nuevo. Quiero ver qué estaba armando.

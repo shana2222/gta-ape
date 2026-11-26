@@ -55,21 +55,21 @@ test('carrega e valida o pacote de história de exemplo completo contra a cidade
   }
 
   const m1 = parseMissionMarkdown(
-    fs.readFileSync(path.join(storyDir, 'missions', '01-el-apagon.md'), 'utf8'),
-    'missions/01-el-apagon.md',
+    fs.readFileSync(path.join(storyDir, 'missions', '01-el-semaforo.md'), 'utf8'),
+    'missions/01-el-semaforo.md',
     cityMap
   );
   assert.equal(m1.startLocation, 'CASA-01');
-  assert.equal(m1.targetLocation, 'COM-96');
+  assert.equal(m1.targetLocation, 'COM-14');
   assert.ok(m1.introCutscene.steps.length >= 2);
   const choiceStep = m1.introCutscene.steps.find((s) => s.choices?.length);
   assert.ok(choiceStep);
   assert.equal(choiceStep.choices.length, 2);
   assert.ok(choiceStep.choices.every((c) => c.outcome === 'next'));
-  assert.ok(m1.outroCutscene.steps.some((step) => step.type === 'deliver' && step.itemId === 'cuaderno-polya'));
+  assert.ok(m1.outroCutscene.steps.some((step) => step.type === 'deliver' && step.itemId === 'control-semaforo'));
   assert.ok(m1.outroCutscene.steps.some((step) => step.type === 'sql' && step.challengeId === 'mision-1'));
 
-  assert.equal(manifest.missions.length, 10);
+  assert.equal(manifest.missions.length, 9);
   assert.equal(manifest.collectibles.length, 10);
   const disqueteItem = parseItemMarkdown(
     fs.readFileSync(path.join(storyDir, 'items', 'disquete.md'), 'utf8'),
@@ -78,8 +78,8 @@ test('carrega e valida o pacote de história de exemplo completo contra a cidade
   assert.equal(disqueteItem.category, 'extra');
   assert.equal(disqueteItem.rarity, 'normal');
   const libretaItem = parseItemMarkdown(
-    fs.readFileSync(path.join(storyDir, 'items', 'cuaderno-polya.md'), 'utf8'),
-    'items/cuaderno-polya.md'
+    fs.readFileSync(path.join(storyDir, 'items', 'control-semaforo.md'), 'utf8'),
+    'items/control-semaforo.md'
   );
   assert.equal(libretaItem.category, 'missao');
 });

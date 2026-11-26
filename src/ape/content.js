@@ -56,95 +56,7 @@ export const AREAS = {
 export const MISSIONS = [
   /* ---------------------------------------------------------------- 1 */
   {
-    n: 1, area: 'pc', icon: '🧩', title: 'Pensar como programador',
-    tema: 'Pensamiento computacional y las 4 fases de Polya',
-    goals: [
-      'Reconozco las 4 fases de Polya para resolver un problema.',
-      'Uso descomposición, patrones, abstracción y algoritmos.',
-      'Resuelvo un desafío tipo Bebras explicando mis pasos.',
-    ],
-    lesson: [
-      { title: '¿Qué es un problema?', html: `<p>Un <b>problema</b> es una situación donde queremos llegar a una meta y <b>todavía no sabemos cómo</b>.</p>
-        <div class="apec-ex"><b>Ejemplo:</b> se cortó la luz en Santa Bruma y hay que volver a prender los semáforos.</div>
-        <p>Para resolverlo no alcanza con "probar cosas": conviene <b>pensar con un método</b>.</p>` },
-      { title: 'Pensamiento computacional', html: `<p>Es la forma de pensar que usamos para resolver problemas como lo haría una computadora. Tiene <b>4 habilidades</b>:</p>
-        <div class="apec-grid4">
-          <div><span>✂️</span><b>Descomposición</b><small>Dividir el problema grande en partes chicas.</small></div>
-          <div><span>🔁</span><b>Patrones</b><small>Encontrar lo que se repite o se parece.</small></div>
-          <div><span>🎯</span><b>Abstracción</b><small>Quedarse con lo importante y dejar de lado lo que no sirve.</small></div>
-          <div><span>📋</span><b>Algoritmo</b><small>Escribir los pasos ordenados para llegar a la solución.</small></div>
-        </div>` },
-      { title: 'Las 4 fases de Polya', html: `<p>George Polya fue un matemático que propuso <b>4 fases</b> para resolver cualquier problema:</p>
-        <ol class="apec-steps">
-          <li><b>Comprender el problema</b>: ¿qué me piden? ¿qué datos tengo?</li>
-          <li><b>Concebir un plan</b>: pensar una estrategia (dibujar, dividir, buscar un problema parecido…).</li>
-          <li><b>Ejecutar el plan</b>: hacer los pasos, uno por uno.</li>
-          <li><b>Examinar la solución</b>: comprobar si funciona y si se puede mejorar.</li>
-        </ol>
-        <p class="apec-tip">💡 Truco para recordarlas: <b>Entiendo → Planeo → Hago → Reviso</b>.</p>` },
-      { title: 'Polya en un ejemplo', html: `<p><b>Problema:</b> el semáforo de 18 de Julio no prende.</p>
-        <table class="apec-table"><tbody>
-          <tr><th>1. Comprender</th><td>¿Qué semáforo? ¿No prende ninguna luz o solo una?</td></tr>
-          <tr><th>2. Planear</th><td>Revisar primero la corriente, después el cable, después la lámpara.</td></tr>
-          <tr><th>3. Ejecutar</th><td>Medir la corriente, cambiar el cable roto.</td></tr>
-          <tr><th>4. Revisar</th><td>Prender el semáforo y ver si cambian las 3 luces.</td></tr>
-        </tbody></table>` },
-      { title: 'Desafíos Bebras', html: `<p>Bebras es un concurso internacional de pensamiento computacional. Sus desafíos se resuelven <b>sin computadora</b>, pensando.</p>
-        <p><b>Cómo encarar uno:</b></p>
-        <ul><li>Lee dos veces la consigna (fase 1).</li><li>Sigue las instrucciones <b>de a una</b>, anotando dónde estás (fase 3).</li><li>Al final, verifica tu respuesta volviendo a hacer el recorrido (fase 4).</li></ul>` },
-    ],
-    cards: [
-      { front: 'Descomposición', back: 'Dividir un problema grande en partes más chicas y fáciles.' },
-      { front: 'Abstracción', back: 'Quedarse con la información importante e ignorar los detalles que no sirven.' },
-      { front: 'Algoritmo', back: 'Lista de pasos ordenados y precisos para resolver un problema.' },
-      { front: 'Fases de Polya', back: '1 Comprender · 2 Planear · 3 Ejecutar · 4 Examinar la solución.' },
-    ],
-    phases: [
-      {
-        id: 'm1-a', title: 'Ordenar las fases de Polya', type: 'order',
-        prompt: '<p>La Cuadrilla tiene que arreglar el apagón. Ordena las <b>4 fases de Polya</b> de la primera a la última.</p>',
-        items: ['Comprender el problema', 'Concebir un plan', 'Ejecutar el plan', 'Examinar la solución'],
-        fail: 'Piensa: primero hay que entender qué pasa, y lo último es revisar si funcionó.',
-      },
-      {
-        id: 'm1-b', title: '¿En qué fase estoy?', type: 'classify',
-        prompt: '<p>Chispa anotó lo que hizo para arreglar el semáforo. Indica en qué <b>fase de Polya</b> está cada acción.</p>',
-        categories: ['1. Comprender', '2. Planear', '3. Ejecutar', '4. Revisar'],
-        items: [
-          { text: 'Leo el reporte: "el semáforo de Ejido no prende la luz verde".', cat: 0 },
-          { text: 'Decido probar primero la lámpara verde y después el cable.', cat: 1 },
-          { text: 'Cambio la lámpara verde por una nueva.', cat: 2 },
-          { text: 'Espero un ciclo completo para ver si cambian las 3 luces.', cat: 3 },
-          { text: 'Me pregunto: ¿qué datos tengo y qué me están pidiendo?', cat: 0 },
-          { text: 'Dibujo un esquema con los pasos que voy a seguir.', cat: 1 },
-        ],
-        fail: 'Fíjate en el verbo: entender/preguntar = comprender; decidir/dibujar el plan = planear; hacer = ejecutar; comprobar = revisar.',
-      },
-      {
-        id: 'm1-c', title: 'Desafío Bebras: el robot repartidor', type: 'choice',
-        prompt: `<p>El robot 🤖 empieza en la casilla <b>A1</b> mirando hacia la <b>derecha</b>. Sigue estas instrucciones:</p>
-          <pre class="apec-code">avanzar 2
-girar a la izquierda (queda mirando hacia arriba)
-avanzar 1
-girar a la derecha
-avanzar 1</pre>
-          <div class="apec-board" aria-label="Tablero de 4 columnas (A a D) y 3 filas (1 a 3). La fila 1 es la de abajo.">
-            <div class="r"><span class="lbl">3</span><i></i><i></i><i></i><i></i></div>
-            <div class="r"><span class="lbl">2</span><i></i><i></i><i></i><i></i></div>
-            <div class="r"><span class="lbl">1</span><i>🤖</i><i></i><i></i><i></i></div>
-            <div class="r cols"><span class="lbl"></span><b>A</b><b>B</b><b>C</b><b>D</b></div>
-          </div>
-          <p>¿En qué casilla termina? (la fila 1 es la de abajo)</p>`,
-        options: ['D2', 'C2', 'D3', 'C3'], answer: 0,
-        fail: 'Hazlo paso a paso: A1 → avanza 2 a la derecha → C1. Ahora mira hacia arriba y avanza 1… sigue tú.',
-      },
-    ],
-    reflection: '¿En qué situación de tu vida (no de informática) podrías usar las 4 fases de Polya? Cuenta el ejemplo con tus palabras.',
-  },
-
-  /* ---------------------------------------------------------------- 2 */
-  {
-    n: 2, area: 'pc', icon: '⚙️', title: 'El proceso computacional',
+    n: 1, area: 'pc', icon: '⚙️', title: 'El proceso computacional',
     tema: 'Entrada → Proceso → Salida y conceptos básicos de programación',
     goals: [
       'Identifico la entrada, el proceso y la salida de un sistema.',
@@ -218,9 +130,9 @@ avanzar 1</pre>
     reflection: 'Elige un aparato de tu casa (microondas, celular, lavarropas…) y explica cuál es su entrada, su proceso y su salida.',
   },
 
-  /* ---------------------------------------------------------------- 3 */
+  /* ---------------------------------------------------------------- 2 */
   {
-    n: 3, area: 'hw', icon: '🟩', title: 'La placa micro:bit',
+    n: 2, area: 'hw', icon: '🟩', title: 'La placa micro:bit',
     tema: 'Placas programables: entradas, salidas y programas',
     goals: [
       'Reconozco las partes de la micro:bit y si son entrada o salida.',
@@ -321,9 +233,9 @@ input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>` },
     reflection: 'Inventa un proyecto útil para tu liceo con la micro:bit. ¿Qué entrada usarías y qué salida?',
   },
 
-  /* ---------------------------------------------------------------- 4 */
+  /* ---------------------------------------------------------------- 3 */
   {
-    n: 4, area: 'hw', icon: '🔌', title: 'Periféricos y corriente',
+    n: 3, area: 'hw', icon: '🔌', title: 'Periféricos y corriente',
     tema: 'Periféricos, conexiones y corriente eléctrica',
     goals: [
       'Clasifico periféricos de entrada, salida y entrada/salida.',
@@ -400,151 +312,208 @@ input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>` },
     reflection: '¿Qué periféricos usas todos los días? Elige dos y explica si son de entrada, de salida o de entrada/salida.',
   },
 
-  /* ---------------------------------------------------------------- 5 */
+  /* ---------------------------------------------------------------- 4 */
   {
-    n: 5, area: 'hw', icon: '💡', title: 'Encender un LED',
-    tema: 'Componentes electrónicos, protoboard y LED con micro:bit (Tinkercad)',
+    n: 4, area: 'hw', icon: '💡', title: 'LED y sensores en la placa',
+    tema: 'Conectar un LED y un sensor externo a la micro:bit: energía, polos y tierra (GND)',
     goals: [
-      'Reconozco la batería, la resistencia, el LED y la protoboard.',
-      'Armo un circuito cerrado con el LED bien conectado (polaridad).',
-      'Prendo un LED conectado a un pin de la micro:bit.',
+      'Conecto un LED a la placa respetando sus polos: pata larga al pin, pata corta a GND.',
+      'Conecto un sensor externo con su alimentación (3V), su tierra (GND) y su señal (pin).',
+      'Programo la placa para que el LED reaccione al sensor.',
     ],
     lesson: [
-      { title: 'Los componentes', html: `<div class="apec-grid2">
-          <div><b>🔋 Batería / pila</b><small>Da la energía. Tiene polo + y polo −.</small></div>
-          <div><b>〰️ Resistencia</b><small>Frena la corriente para que el LED no se queme. Sus franjas de colores indican su valor.</small></div>
-          <div><b>💡 LED</b><small>Diodo emisor de luz. Solo funciona conectado en un sentido.</small></div>
-          <div><b>🔘 Interruptor</b><small>Abre o cierra el circuito.</small></div>
-        </div>` },
-      { title: 'El LED tiene polaridad', html: `<ul><li><b>Ánodo (+)</b>: la <b>pata larga</b>. Va hacia el polo + (o hacia el pin de la placa).</li>
-        <li><b>Cátodo (−)</b>: la <b>pata corta</b> (el lado plano del LED). Va hacia el − (GND).</li></ul>
-        <p class="apec-tip">💡 Si lo conectas al revés no se rompe, pero <b>no prende</b>. Y sin resistencia, ¡se puede quemar!</p>` },
-      { title: 'La protoboard', html: `<p>Es una placa para armar circuitos <b>sin soldar</b>.</p>
-        <ul><li>En la parte central, los agujeros de una misma <b>columna de 5</b> están conectados entre sí.</li>
-        <li>La <b>canaleta del medio</b> separa las dos mitades: lo de un lado no está conectado con lo del otro.</li>
-        <li>Los <b>rieles</b> de los costados (+ rojo y − azul) recorren toda la placa: ahí va la alimentación.</li></ul>` },
-      { title: 'LED con la micro:bit', html: `<p>La micro:bit puede dar energía por sus <b>pines</b>:</p>
-        <p><b>Pin 0</b> → resistencia → <b>ánodo</b> (pata larga) … <b>cátodo</b> → <b>GND</b>.</p>
-        <pre class="apec-code">pins.digital_write_pin(DigitalPin.P0, 1)   # 1 = prender
-pins.digital_write_pin(DigitalPin.P0, 0)   # 0 = apagar</pre>
-        <p>En <b>Tinkercad</b> (Circuitos) puedes armarlo y simularlo antes de hacerlo con los componentes reales.</p>` },
+      { title: 'Energía, polos y tierra', html: `<p>Para que algo funcione con electricidad necesita un <b>camino completo</b>: la corriente sale del <b>+</b>, pasa por el componente y vuelve al <b>−</b>.</p>
+        <table class="apec-table"><tbody>
+          <tr><th>3V (+)</th><td>La salida de energía de la micro:bit: alimenta los componentes.</td></tr>
+          <tr><th>GND (−)</th><td>La <b>tierra</b>: el punto por donde vuelve la corriente. <b>Todos</b> los componentes se conectan a GND.</td></tr>
+          <tr><th>P0, P1, P2</th><td><b>Pines</b>: el programa los usa para prender cosas (salida) o para leer sensores (entrada).</td></tr>
+        </tbody></table>
+        <p class="apec-tip">💡 La placa necesita <b>energía</b> (cable USB o pilas) para que todo esto funcione.</p>` },
+      { title: 'El LED tiene polaridad', html: `<ul><li><b>Pata larga = ánodo (+)</b>: va al <b>pin</b> que maneja el programa (por ejemplo P0).</li>
+        <li><b>Pata corta = cátodo (−)</b>, el lado plano: va a <b>GND</b>.</li></ul>
+        <p>Si lo conectas <b>al revés</b>, no prende. Si lo conectas directo a <b>3V</b>, queda prendido siempre y el programa no lo puede apagar.</p>
+        <p class="apec-tip">💡 En los kits el LED lleva una <b>resistencia</b> para no quemarse. En el simulador ya viene incluida.</p>` },
+      { title: 'Sensores externos', html: `<p>Un <b>módulo sensor</b> (de luz, de movimiento, de humedad…) suele tener <b>3 patas</b>:</p>
+        <table class="apec-table"><tbody>
+          <tr><th style="color:#e5484d">VCC (+)</th><td>Energía: va a <b>3V</b>.</td></tr>
+          <tr><th>GND (−)</th><td>Tierra: va a <b>GND</b> (se comparte con el LED).</td></tr>
+          <tr><th style="color:#c99700">S (señal)</th><td>Lo que mide el sensor: va a un <b>pin de entrada</b>, por ejemplo P1.</td></tr>
+        </tbody></table>
+        <p class="apec-tip">⚠️ Si inviertes VCC y GND, el sensor se puede dañar. ¡Revisa los polos antes de dar energía!</p>` },
+      { title: 'Leer el sensor y manejar el LED', html: `<p>Con el sensor en P1 y el LED en P0, podemos hacer un <b>farol automático</b>:</p>
+        <pre class="apec-code">def para_siempre():
+    luz = pins.analog_read_pin(AnalogPin.P1)   # 0 = oscuro, 1023 = mucha luz
+    if luz &lt; 400:
+        pins.digital_write_pin(DigitalPin.P0, 1)   # prende el LED
+    else:
+        pins.digital_write_pin(DigitalPin.P0, 0)   # apaga el LED
+basic.forever(para_siempre)</pre>
+        <p>En <b>Tinkercad</b> (Circuitos) puedes armar lo mismo y simularlo antes de hacerlo con los componentes reales.</p>` },
     ],
     cards: [
-      { front: 'Ánodo', back: 'Pata larga del LED. Se conecta hacia el polo positivo (+).' },
-      { front: 'Cátodo', back: 'Pata corta del LED (lado plano). Se conecta al negativo (− / GND).' },
-      { front: 'GND', back: 'Tierra o negativo: el punto por donde vuelve la corriente.' },
-      { front: 'Protoboard', back: 'Placa para armar circuitos sin soldar. Las columnas de 5 agujeros están conectadas.' },
+      { front: 'GND', back: 'Tierra o negativo (−): por donde vuelve la corriente. Todos los componentes van a GND.' },
+      { front: 'Pata larga del LED', back: 'Ánodo (+). Va al pin que maneja el programa (P0).' },
+      { front: 'VCC', back: 'La pata de energía (+) de un sensor. Va a 3V.' },
+      { front: 'Pin de señal', back: 'Pin (P0, P1, P2) que el programa usa para leer un sensor o prender un LED.' },
     ],
     phases: [
       {
-        id: 'm5-a', title: 'Cablear el farol', type: 'wires',
-        prompt: `<p>El farol de la plaza no prende. <b>Conecta los cables</b> para que el LED prenda sin quemarse y se pueda <b>apagar con el interruptor</b>.</p>
-          <p class="apec-tip">Toca un punto y después otro para tender un cable. Toca un cable para sacarlo. Después prueba el circuito con el interruptor cerrado y abierto.</p>`,
-        fail: 'Revisa: ¿hay un camino completo del + al −? ¿pasa por la resistencia y por el interruptor? ¿la pata larga del LED mira hacia el +?',
+        id: 'm5-a', title: 'Conectar el LED', type: 'pinwire', parts: ['led'], program: 'blink',
+        programText: 'def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    pins.digital_write_pin(DigitalPin.P0, 0)\n    basic.pause(500)\nbasic.forever(para_siempre)',
+        prompt: `<p>La placa ya tiene un programa que hace parpadear un LED en el <b>pin P0</b>. <b>Conecta el LED</b> a la placa y <b>dale energía</b>.</p>
+          <p class="apec-tip">Toca una pata del LED y después el conector de la placa. Para sacar un cable, tócalo. Después toca <b>⚡ Probar conexiones</b>.</p>`,
+        fail: 'Revisa los polos: pata larga (+) al pin P0, pata corta (−) a GND, y que la placa tenga energía.',
       },
       {
-        id: 'm5-b', title: 'Armar en la protoboard', type: 'proto',
-        prompt: `<p>Ahora el circuito de verdad, como en Tinkercad. La pila ya está conectada a los rieles (<b>+</b> rojo y <b>−</b> azul) y el LED ya está pinchado: pata larga en <b>e5</b>, pata corta en <b>e7</b>.</p>
-          <p>Coloca la <b>resistencia</b> y el <b>cable negro</b> (cada uno tiene 2 patas) para cerrar el circuito.</p>
-          <p class="apec-tip">Pasa el mouse (o toca) un agujero: se iluminan todos los que están conectados con él.</p>`,
-        led: { a: 'e5', k: 'e7' },
-        fail: 'Recuerda: en la protoboard solo están conectados los 5 agujeros de la misma columna y del mismo lado de la canaleta, y todo el riel.',
+        id: 'm5-b', title: 'Conectar un sensor de luz', type: 'pinwire', parts: ['led', 'sensor'], program: 'farol',
+        programText: 'def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz < 400:\n        pins.digital_write_pin(DigitalPin.P0, 1)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)',
+        prompt: `<p>Chispa quiere un <b>farol automático</b>: que el LED se prenda cuando oscurece. Conecta el <b>LED</b> y el <b>sensor de luz</b> a la placa, dale energía y pruébalo moviendo la luz ambiente.</p>
+          <p class="apec-tip">El sensor tiene 3 patas: <b>VCC</b> (energía), <b>GND</b> (tierra) y <b>S</b> (señal). Mira el programa: ¿en qué pin lee el sensor?</p>`,
+        fail: 'Revisa cada pata: VCC a 3V, GND a GND, la señal al pin que lee el programa, y el LED con sus polos bien puestos.',
       },
       {
-        id: 'm5-c', title: 'Hacer parpadear el LED', type: 'mbsim', mode: 'code', pins: true,
-        prompt: `<p>Conectaste un LED al <b>pin 0</b> y a <b>GND</b> de la micro:bit. Completa el programa para que el LED <b>parpadee</b>: prendido medio segundo, apagado medio segundo, <b>para siempre</b>.</p>
-          <p class="apec-tip"><code>pins.digital_write_pin(DigitalPin.P0, 1)</code> prende y con <code>0</code> apaga. <code>basic.pause(500)</code> espera medio segundo.</p>`,
-        starter: 'def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    # completa: apaga el LED y espera\n\nbasic.forever(para_siempre)\n',
+        id: 'm5-c', title: 'Programar el farol', type: 'mbsim', mode: 'code', pins: true, sensors: ['ext-light'],
+        prompt: `<p>El LED (P0) y el sensor de luz (P1) ya están conectados. Completa el programa para que el LED se <b>prenda cuando hay poca luz</b> y se <b>apague cuando hay mucha</b>.</p>
+          <p class="apec-tip"><code>pins.analog_read_pin(AnalogPin.P1)</code> devuelve de <b>0</b> (oscuro) a <b>1023</b> (mucha luz). Prueba moviendo la luz sobre el sensor.</p>`,
+        starter: 'def para_siempre():\n    luz = pins.analog_read_pin(AnalogPin.P1)\n    if luz < ___:\n        pins.digital_write_pin(DigitalPin.P0, ___)\n    else:\n        pins.digital_write_pin(DigitalPin.P0, ___)\nbasic.forever(para_siempre)\n',
         check: async (sim) => {
-          await sim.advance(4000);
+          sim.setExtLight(8);
+          await sim.advance(600);
           if (sim.error) return 'la placa dio un error.';
-          const p0 = sim.pinLog.filter((x) => x.pin === 'P0');
-          if (!p0.length) return 'el pin 0 nunca cambia. Usa pins.digital_write_pin(DigitalPin.P0, …).';
-          let changes = 0; let prev = null; let lastT = null; let minGap = Infinity;
-          for (const x of p0) { if (prev !== null && x.v !== prev) { changes += 1; if (lastT !== null) minGap = Math.min(minGap, x.t - lastT); lastT = x.t; } if (prev === null) lastT = x.t; prev = x.v; }
-          if (!p0.some((x) => x.v === 0)) return 'el LED se prende pero nunca se apaga. Falta escribir 0 en el pin.';
-          if (changes < 4) return 'el LED no parpadea varias veces. ¿Está dentro de basic.forever?';
-          if (minGap < 150) return 'el LED se apaga y se prende tan rápido que no se ve. Falta una pausa después de apagarlo.';
+          if (sim.pins.P0 !== 1) return 'con poca luz (casi oscuro) el LED tiene que estar prendido (1).';
+          sim.setExtLight(92);
+          await sim.advance(600);
+          if (sim.pins.P0 !== 0) return 'con mucha luz el LED tiene que apagarse (0).';
+          sim.setExtLight(10);
+          await sim.advance(600);
+          if (sim.pins.P0 !== 1) return 'cuando vuelve a oscurecer, el LED se tiene que prender otra vez. ¿Está dentro de basic.forever?';
           return true;
         },
-        require: [{ re: /basic\.forever\s*\(/, msg: 'Para que se repita, el programa tiene que estar en basic.forever.' }],
+        require: [{ re: /analog_read_pin\s*\(\s*AnalogPin\.P1/, msg: 'El programa tiene que leer el sensor en el pin P1.' }],
       },
     ],
-    reflection: 'Si el LED de tu circuito no prende, ¿qué revisarías primero y por qué? Usa las palabras ánodo, cátodo o resistencia.',
+    reflection: 'Si conectas un sensor y no funciona, ¿qué revisarías primero? Usa las palabras energía, GND y señal.',
   },
 
-  /* ---------------------------------------------------------------- 6 */
+  /* ---------------------------------------------------------------- 5 */
   {
-    n: 6, area: 'ia', icon: '🤖', title: 'Entrenar una IA',
-    tema: 'Fundamentos de IA y entrenamiento de un modelo de Machine Learning',
+    n: 5, area: 'ia', icon: '🤖', title: 'Entrenar y usar una IA',
+    tema: 'Entrenar un modelo de Machine Learning y programar con su confianza (%)',
     goals: [
-      'Explico qué es la inteligencia artificial y el aprendizaje automático (ML).',
-      'Ordeno las etapas para entrenar un modelo: datos, etiquetas, entrenamiento, prueba.',
-      'Reconozco que datos malos o desbalanceados producen un modelo con errores (sesgo).',
+      'Entreno un modelo dando ejemplos etiquetados de cada clase.',
+      'Explico por qué la confianza (%) sube con más y mejores datos, y cómo los datos desbalanceados generan sesgo.',
+      'Programo una decisión usando la clase y el % de confianza del modelo.',
     ],
     lesson: [
       { title: '¿Qué es la IA?', html: `<p>La <b>inteligencia artificial</b> son programas que hacen tareas que antes solo hacían las personas: reconocer caras, entender la voz, traducir, recomendar videos.</p>
         <p class="apec-tip">💡 La IA <b>no piensa ni siente</b>: encuentra patrones en muchos datos.</p>` },
-      { title: 'Machine Learning (aprendizaje automático)', html: `<p>En la programación común, <b>nosotros escribimos las reglas</b>. En ML, le damos a la computadora <b>muchos ejemplos</b> y ella <b>descubre las reglas</b> sola.</p>
-        <div class="apec-flow"><span>📦 Ejemplos con etiqueta</span><i>→</i><span>🧠 Entrenamiento</span><i>→</i><span>🤖 Modelo</span></div>` },
-      { title: 'Las etapas de un proyecto de ML', html: `<ol class="apec-steps">
-          <li><b>Definir las clases</b>: ¿qué tiene que reconocer? (ej: 🍎 manzana / 🍌 banana)</li>
-          <li><b>Juntar datos</b>: muchas fotos, sonidos o textos de cada clase.</li>
-          <li><b>Etiquetar</b>: decir a qué clase pertenece cada ejemplo.</li>
-          <li><b>Entrenar</b>: la computadora busca los patrones.</li>
-          <li><b>Probar</b>: mostrarle ejemplos <b>nuevos</b> y ver si acierta.</li>
-        </ol>
-        <p>Herramientas como <b>Teachable Machine</b> o <b>Machine Learning for Kids</b> hacen esto en el navegador.</p>` },
-      { title: 'Basura entra, basura sale', html: `<p>Un modelo aprende <b>de los datos que le damos</b>. Si las etiquetas están mal, o hay muchos ejemplos de una clase y muy pocos de otra, el modelo se equivoca.</p>
-        <div class="apec-ex"><b>Sesgo:</b> si entrenas un reconocedor de caras solo con fotos de personas de pelo corto, va a fallar con las de pelo largo.</div>
-        <p>Por eso los datos tienen que ser <b>variados, balanceados y bien etiquetados</b>.</p>` },
+      { title: 'Machine Learning', html: `<p>En la programación común, <b>nosotros escribimos las reglas</b>. En ML, le damos a la computadora <b>muchos ejemplos</b> y ella <b>descubre las reglas</b> sola.</p>
+        <ol class="apec-steps"><li><b>Clases</b>: qué tiene que reconocer (plástico, papel, vidrio).</li><li><b>Ejemplos</b>: muchos objetos de cada clase, con su <b>etiqueta</b>.</li><li><b>Entrenar</b>: la computadora busca los patrones.</li><li><b>Probar</b>: con objetos <b>nuevos</b>, que no vio.</li></ol>
+        <p>Es lo mismo que haces en <b>Teachable Machine</b> o <b>Machine Learning for Kids</b>.</p>` },
+      { title: 'La confianza (%)', html: `<p>Cuando el modelo mira algo nuevo, no dice solo "es plástico": da un <b>porcentaje para cada clase</b>.</p>
+        <div class="apec-ex">🧴 → Plástico <b>86 %</b> · Papel 9 % · Vidrio 5 %</div>
+        <ul><li>Con <b>pocos ejemplos</b>, el modelo duda: los % quedan parejos.</li><li>Con <b>más ejemplos y bien etiquetados</b>, la confianza sube.</li><li>Si una clase tiene <b>muchos más ejemplos</b> que otra, el modelo tiende a elegirla: eso es <b>sesgo</b>.</li></ul>` },
+      { title: 'Programar con el %', html: `<p>Una IA útil <b>hace algo</b> con lo que reconoce. Pero si no está segura, conviene no actuar:</p>
+        <pre class="apec-code">if confianza &gt;= 80:
+    if clase == "plastico":
+        print("Contenedor amarillo")
+else:
+    print("No estoy segura: que lo revise una persona")</pre>
+        <p class="apec-tip">💡 El número (80) es el <b>umbral</b>: lo decidimos nosotros según cuánto riesgo aceptamos.</p>` },
     ],
     cards: [
-      { front: 'Machine Learning', back: 'La computadora aprende patrones a partir de muchos ejemplos, en vez de reglas escritas a mano.' },
-      { front: 'Etiqueta', back: 'El nombre de la clase de cada ejemplo (ej: esta foto es "gato").' },
-      { front: 'Entrenamiento', back: 'Etapa en que el modelo busca patrones en los datos etiquetados.' },
-      { front: 'Sesgo', back: 'Error del modelo causado por datos incompletos, desbalanceados o mal etiquetados.' },
+      { front: 'Etiqueta', back: 'El nombre de la clase de cada ejemplo (ej: esta foto es "papel").' },
+      { front: 'Confianza', back: 'El % con que el modelo cree que algo pertenece a una clase.' },
+      { front: 'Umbral', back: 'El % mínimo que pedimos para que el programa actúe (ej: 80 %).' },
+      { front: 'Sesgo', back: 'Error del modelo por datos desbalanceados, incompletos o mal etiquetados.' },
     ],
     phases: [
       {
-        id: 'm6-a', title: 'Las etapas del ML', type: 'order',
-        prompt: '<p>Tecla quiere entrenar un modelo que reconozca residuos para reciclar. Ordena las etapas.</p>',
-        items: ['Definir las clases (papel, plástico, vidrio)', 'Juntar muchas fotos de residuos', 'Etiquetar cada foto con su clase', 'Entrenar el modelo', 'Probar el modelo con fotos nuevas'],
-        fail: 'Antes de entrenar hay que tener los datos etiquetados, y la prueba siempre es al final, con ejemplos nuevos.',
-      },
-      {
-        id: 'm6-b', title: 'Entrena el clasificador de frutas', type: 'ml',
-        prompt: '<p>La feria de Santa Bruma quiere una balanza que reconozca la fruta sola. <b>Etiqueta</b> cada ejemplo de entrenamiento, después <b>entrena</b> y <b>prueba</b> el modelo con frutas nuevas.</p>',
-        classes: ['🍎 Manzana', '🍌 Banana'],
-        train: [
-          { label: 'roja, redonda, chica', f: [1, 1, 0], cat: 0 },
-          { label: 'amarilla, alargada, mediana', f: [0, 0, 1], cat: 1 },
-          { label: 'verde, redonda, chica', f: [0.4, 1, 0], cat: 0 },
-          { label: 'amarilla, alargada, grande', f: [0, 0, 1.4], cat: 1 },
-          { label: 'roja, redonda, mediana', f: [1, 1, 0.5], cat: 0 },
-          { label: 'verde, alargada, mediana', f: [0.4, 0, 1], cat: 1 },
+        id: 'm6-a', title: 'Entrenar el clasificador de reciclaje', type: 'mltrain', minConf: 80,
+        prompt: `<p>Tecla está armando una <b>cinta de reciclaje inteligente</b>. Pon ejemplos en cada clase, <b>entrena</b> el modelo y <b>pruébalo</b> con objetos nuevos.</p>
+          <p class="apec-tip">Meta: que reconozca los 3 objetos nuevos con <b>80 % o más</b> de confianza. Mira qué pasa con el % cuando agregas más ejemplos. ¡Ojo con lo que no es reciclable!</p>`,
+        classes: [{ name: 'Plástico', icon: '🟨' }, { name: 'Papel', icon: '🟦' }, { name: 'Vidrio', icon: '🟩' }],
+        pool: [
+          { id: 'p1', emoji: '🥤', name: 'Vaso descartable', f: [0.95, 0.1, 0.05, 0], cat: 0 },
+          { id: 'q1', emoji: '📄', name: 'Hoja', f: [0.1, 0.9, 0, 0], cat: 1 },
+          { id: 'v1', emoji: '🍾', name: 'Botella de vidrio', f: [0.1, 0, 0.95, 0], cat: 2 },
+          { id: 'p2', emoji: '🛍️', name: 'Bolsa', f: [0.85, 0.05, 0.15, 0], cat: 0 },
+          { id: 'q2', emoji: '📦', name: 'Caja de cartón', f: [0.05, 1, 0.1, 0], cat: 1 },
+          { id: 'x1', emoji: '🍌', name: 'Cáscara de banana', f: [0.1, 0.15, 0, 1], cat: null },
+          { id: 'v2', emoji: '🫙', name: 'Frasco', f: [0, 0.1, 0.9, 0], cat: 2 },
+          { id: 'p3', emoji: '🧴', name: 'Botella de shampoo', f: [0.9, 0.2, 0, 0], cat: 0 },
+          { id: 'q3', emoji: '📰', name: 'Diario', f: [0.2, 0.85, 0, 0], cat: 1 },
+          { id: 'v3', emoji: '🍷', name: 'Copa', f: [0.15, 0, 1, 0], cat: 2 },
+          { id: 'p4', emoji: '🪣', name: 'Balde', f: [1, 0, 0.1, 0], cat: 0 },
+          { id: 'q4', emoji: '✉️', name: 'Sobre', f: [0, 0.95, 0.05, 0], cat: 1 },
+          { id: 'v4', emoji: '🥛', name: 'Vaso de vidrio', f: [0.05, 0.05, 0.85, 0], cat: 2 },
         ],
         test: [
-          { label: 'roja, redonda, grande', f: [1, 1, 1], cat: 0 },
-          { label: 'amarilla, alargada, chica', f: [0, 0, 0.5], cat: 1 },
-          { label: 'verde, redonda, mediana', f: [0.4, 1, 0.5], cat: 0 },
+          { emoji: '🧃', name: 'Envase de yogur', f: [0.9, 0.05, 0.1, 0], cat: 0 },
+          { emoji: '🗞️', name: 'Revista', f: [0.1, 0.9, 0.05, 0], cat: 1 },
+          { emoji: '🏺', name: 'Jarrón', f: [0.05, 0.1, 0.9, 0], cat: 2 },
         ],
-        fail: 'El modelo aprende de TUS etiquetas. Si una está mal, el modelo aprende mal. Revisa forma y color de cada ejemplo.',
+        model: { T: 0.3, prior: 1 },
+        fail: 'Revisa que cada clase tenga ejemplos correctos.',
+        lowConf: 'Con pocos ejemplos el modelo duda. Agrega más ejemplos a cada clase y vuelve a entrenar.',
       },
       {
-        id: 'm6-c', title: 'Detectar el sesgo', type: 'choice',
-        prompt: '<p>Un modelo para reconocer perros y gatos se entrenó con <b>200 fotos de perros</b> y solo <b>5 de gatos</b>. Ahora dice "perro" casi siempre. ¿Cuál es la mejor solución?</p>',
-        options: ['Agregar muchas más fotos variadas de gatos para que las clases queden balanceadas.', 'Borrar las fotos de gatos.', 'Entrenarlo más veces con los mismos datos.', 'Usar una computadora más rápida.'],
-        answer: 0,
-        fail: 'El problema está en los DATOS: una clase tiene muchísimos ejemplos y la otra casi ninguno.',
+        id: 'm6-b', title: 'Corregir el sesgo', type: 'mltrain', minConf: 75,
+        prompt: `<p>Pixel entrenó un modelo para la veterinaria que reconoce <b>perros y gatos</b>, pero lo entrenó con <b>7 perros y 1 solo gato</b>. Entrénalo así y pruébalo: ¿qué pasa con los gatos?</p>
+          <p>Después <b>corrige los datos</b> para que reconozca los 3 animales nuevos con <b>75 % o más</b>.</p>`,
+        classes: [{ name: 'Perro', icon: '🐶' }, { name: 'Gato', icon: '🐱' }],
+        pool: [
+          { id: 'd1', emoji: '🐕', name: 'Perro 1', f: [0.3, 0.8, 0.7], cat: 0 }, { id: 'd2', emoji: '🐩', name: 'Caniche', f: [0.4, 0.9, 0.5], cat: 0 },
+          { id: 'd3', emoji: '🦮', name: 'Perro guía', f: [0.2, 0.7, 0.9], cat: 0 }, { id: 'd4', emoji: '🐕‍🦺', name: 'Perro de servicio', f: [0.35, 0.85, 0.6], cat: 0 },
+          { id: 'd5', emoji: '🐶', name: 'Cachorro', f: [0.5, 0.75, 0.4], cat: 0 }, { id: 'd6', emoji: '🐕', name: 'Perro 2', f: [0.3, 0.9, 0.8], cat: 0 },
+          { id: 'd7', emoji: '🐩', name: 'Perro 3', f: [0.45, 0.7, 0.5], cat: 0 },
+          { id: 'c1', emoji: '🐈', name: 'Gato 1', f: [0.9, 0.2, 0.2], cat: 1 },
+          { id: 'c2', emoji: '🐈‍⬛', name: 'Gato negro', f: [0.85, 0.3, 0.25], cat: 1 }, { id: 'c3', emoji: '🐱', name: 'Gatito', f: [0.95, 0.25, 0.15], cat: 1 },
+          { id: 'c4', emoji: '🐈', name: 'Gato 2', f: [0.8, 0.2, 0.3], cat: 1 }, { id: 'c5', emoji: '😺', name: 'Gato 3', f: [0.9, 0.35, 0.2], cat: 1 },
+          { id: 'c6', emoji: '🐈‍⬛', name: 'Gato 4', f: [0.85, 0.15, 0.25], cat: 1 },
+        ],
+        preset: { 0: ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'], 1: ['c1'] },
+        test: [
+          { emoji: '😸', name: 'Gata de Byte', f: [0.78, 0.33, 0.28], cat: 1 },
+          { emoji: '🐱', name: 'Gato del vecino', f: [0.8, 0.3, 0.3], cat: 1 },
+          { emoji: '🐕', name: 'Perro de Rayo', f: [0.35, 0.8, 0.6], cat: 0 },
+        ],
+        model: { T: 0.25, prior: 1.3 },
+        fail: 'Hay muchos más perros que gatos: el modelo tiende a decir "perro". Agrega ejemplos de gatos para balancear las clases.',
+        lowConf: 'Las clases todavía están desbalanceadas. Agrega más gatos (o saca algunos perros) y vuelve a entrenar.',
+      },
+      {
+        id: 'm6-c', title: 'Programar con la confianza', type: 'mlprog',
+        prompt: `<p>El modelo ya está entrenado. El robot de la cinta recibe dos variables: <code>clase</code> (<code>"plastico"</code>, <code>"papel"</code> o <code>"vidrio"</code>) y <code>confianza</code> (de 0 a 100).</p>
+          <p>Programa el robot: si la confianza es de <b>80 o más</b>, manda el objeto al contenedor de su clase (<b>amarillo</b> plástico, <b>azul</b> papel, <b>verde</b> vidrio). Si es <b>menor a 80</b>, que lo deje para que lo <b>revise</b> una persona.</p>`,
+        classNames: ['plastico', 'papel', 'vidrio'],
+        cases: [
+          { emoji: '🧴', name: 'Envase de detergente', clase: 'plastico', conf: 93 },
+          { emoji: '🗞️', name: 'Revista', clase: 'papel', conf: 88 },
+          { emoji: '🫙', name: 'Frasco', clase: 'vidrio', conf: 91 },
+          { emoji: '🧸', name: 'Peluche', clase: 'plastico', conf: 46 },
+          { emoji: '🍕', name: 'Caja de pizza con grasa', clase: 'papel', conf: 61 },
+          { emoji: '🥫', name: 'Lata', clase: 'vidrio', conf: 79 },
+          { emoji: '🥤', name: 'Vaso', clase: 'plastico', conf: 80 },
+        ],
+        starter: '# clase y confianza las da el modelo entrenado\nif confianza >= ___:\n    if clase == "plastico":\n        print("Contenedor amarillo")\n    elif clase == "papel":\n        print("Contenedor ___")\n    # completa: vidrio va al contenedor verde\nelse:\n    print("Revisar a mano")\n',
+        expect: (c, out) => {
+          const o = norm(out);
+          const want = c.conf >= 80 ? { plastico: 'amarillo', papel: 'azul', vidrio: 'verde' }[c.clase] : 'revis';
+          const all = ['amarillo', 'azul', 'verde', 'revis'];
+          if (!o.includes(want)) return c.conf >= 80 ? `tiene que ir al contenedor ${want}.` : 'la confianza es menor a 80: tiene que quedar para revisar.';
+          const extra = all.filter((w) => w !== want && o.includes(w));
+          if (extra.length) return `el robot hace más de una cosa (${extra.join(', ')}). Tiene que hacer solo una.`;
+          return true;
+        },
+        require: [{ re: /confianza/, msg: 'El robot tiene que usar la variable confianza para decidir.' }],
       },
     ],
-    reflection: '¿Dónde usas inteligencia artificial en tu vida diaria? Cuenta un ejemplo y un cuidado que hay que tener con ella.',
+    reflection: '¿Por qué conviene que el robot no actúe cuando la confianza es baja? Da un ejemplo de algo que podría salir mal.',
   },
-
-  /* ---------------------------------------------------------------- 7 */
+  /* ---------------------------------------------------------------- 6 */
   {
-    n: 7, area: 'py', icon: '🐍', title: 'Python: primeros pasos',
+    n: 6, area: 'py', icon: '🐍', title: 'Python: primeros pasos',
     tema: 'Lenguaje de programación, salida de datos con print() y tipos de datos',
     goals: [
       'Explico qué es un lenguaje de programación y cómo se ejecuta Python.',
@@ -623,9 +592,9 @@ Gracias por esperar</pre>`,
     reflection: '¿Por qué crees que "15" y 15 no son lo mismo para Python? Explícalo como si se lo contaras a un compañero.',
   },
 
-  /* ---------------------------------------------------------------- 8 */
+  /* ---------------------------------------------------------------- 7 */
   {
-    n: 8, area: 'py', icon: '📦', title: 'Variables y entrada de datos',
+    n: 7, area: 'py', icon: '📦', title: 'Variables y entrada de datos',
     tema: 'Variables, input() y conversión de datos con int(), float() y str()',
     goals: [
       'Guardo datos en variables con nombres claros.',
@@ -702,9 +671,9 @@ print("Total: $" + str(precio * 2))</pre>` },
     reflection: 'Explica con tus palabras por qué hay que usar int() con input() antes de hacer una cuenta. ¿Qué error aparece si no lo haces?',
   },
 
-  /* ---------------------------------------------------------------- 9 */
+  /* ---------------------------------------------------------------- 8 */
   {
-    n: 9, area: 'py', icon: '🔎', title: 'Funciones de texto y math',
+    n: 8, area: 'py', icon: '🔎', title: 'Funciones de texto y math',
     tema: 'Funciones incorporadas de Python: texto (len, upper, lower…) y el módulo math',
     goals: [
       'Uso funciones de texto: len(), upper(), lower(), title(), replace(), strip().',
@@ -777,9 +746,9 @@ print(math.ceil(4.2))    # 5   (redondea para arriba)</pre>
     reflection: '¿Qué función de texto o de math te pareció más útil? Inventa un problema donde la usarías.',
   },
 
-  /* ---------------------------------------------------------------- 10 */
+  /* ---------------------------------------------------------------- 9 */
   {
-    n: 10, area: 'py', icon: '🔀', title: 'Decisiones: if / elif / else',
+    n: 9, area: 'py', icon: '🔀', title: 'Decisiones: if / elif / else',
     tema: 'Estructuras condicionales y el flujo de decisiones de una historia',
     goals: [
       'Escribo condiciones con operadores de comparación (==, !=, <, >, <=, >=).',
@@ -954,14 +923,9 @@ export const BONUS = [
     ],
   },
   {
-    id: 'b-inet-1', center: 'inet', title: 'Circuito abierto o cerrado', type: 'classify',
-    prompt: '<p>Profe Bit revisa cerraduras eléctricas. ¿El circuito está abierto o cerrado?</p>',
-    categories: ['Cerrado (funciona)', 'Abierto (no funciona)'],
-    items: [
-      { text: 'Interruptor apretado y todos los cables conectados.', cat: 0 }, { text: 'Un cable suelto en la protoboard.', cat: 1 },
-      { text: 'Interruptor apagado.', cat: 1 }, { text: 'Pila → resistencia → LED → pila, todo conectado.', cat: 0 },
-    ],
-    fail: 'Cerrado = la corriente tiene un camino completo de ida y vuelta a la pila.',
+    id: 'b-inet-1', center: 'inet', title: 'El farol a pila (desafío)', type: 'wires',
+    prompt: '<p>Profe Bit tiene un farol que funciona <b>a pila</b>, sin placa. Tiende los cables: pila, interruptor, resistencia y LED, para que prenda y se apague con el interruptor.</p><p class="apec-tip">Toca un punto y después otro para tender un cable. Prueba con el interruptor cerrado y abierto.</p>',
+    fail: 'Revisa: ¿hay un camino completo del + al −? ¿pasa por la resistencia y por el interruptor? ¿la pata larga del LED mira hacia el +?',
   },
   {
     id: 'b-inet-2', center: 'inet', title: 'Ley de Ohm (desafío)', type: 'choice',

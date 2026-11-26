@@ -1,6 +1,6 @@
 ---
-id: 09-el-misterio
-title: Misión 9 — La pista cifrada
+id: 08-el-misterio
+title: Misión 8 — La pista cifrada
 start: COM-14
 pickup: PRACA-15
 pickup_objective: Busca la Pista Cifrada en el Parque Rodó (PRACA-15)
@@ -33,7 +33,7 @@ bg: Depósito de Tito en el Puerto
 - Byte: Python tiene funciones incorporadas para eso: strip() saca espacios, upper() pasa a mayúsculas, len() cuenta caracteres.
 - Tito: ¿Y para medir la fuente de la plaza? Me pidieron cubrirla y no sé el área.
 - Byte: Para eso está el módulo math.
-- APE: mision-9
+- APE: mision-8
 - Tito: "EL CULPABLE ESTÁ EN EL PUERTO". ¡Pero si acá estoy yo!
 - Byte: Tranquilo, Tito. En el puerto también está la batería de respaldo de NÚCLEO. Ahí tiene que estar la respuesta.
 - Tito: La batería la llevaron a la Plaza de la Bandera (PRACA-12). Llévasela a Vera.

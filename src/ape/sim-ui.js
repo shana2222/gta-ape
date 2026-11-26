@@ -1,7 +1,9 @@
 // Interfaz de los simuladores de placas y circuitos (micro:bit, conectores, corriente, cables y protoboard).
 import { MicrobitSim, patternOf } from './microbit-sim.js';
 import { PyError, codeWithoutComments } from './python-mini.js';
-import { solveCircuit, protoLinks, protoNet, PROTO_COLS, PROTO_TOP, PROTO_BOTTOM } from './circuit-sim.js';
+import { solveCircuit } from './circuit-sim.js';
+import { trainModel } from './ml-sim.js';
+import { Interpreter } from './python-mini.js';
 
 function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
@@ -69,7 +71,7 @@ function codeEditor({ value, readonly = false, onInput = () => {}, onRun = () =>
 /* ======================================================================
    MICRO:BIT
    ====================================================================== */
-function microbitBoard({ sensors = [], pins = false, onTrigger, onTemp }) {
+function microbitBoard({ sensors = [], pins = false, onTrigger, onTemp, onExtLight }) {
   const cells = [];
   const matrix = h('div', { class: 'apec-microbit', role: 'img', 'aria-label': 'Matriz de LED de la micro:bit' });
   for (let y = 0; y < 5; y++) {
@@ -84,10 +86,13 @@ function microbitBoard({ sensors = [], pins = false, onTrigger, onTemp }) {
   const tempVal = h('b', {}, '21 °C');
   const temp = sensors.includes('temperature') ? h('label', { class: 'apec-mb-sensor' }, '🌡️ Temperatura ', tempVal,
     h('input', { type: 'range', min: '-5', max: '45', value: '21', 'aria-label': 'Temperatura del ambiente', oninput: (e) => { tempVal.textContent = `${e.target.value} °C`; onTemp(Number(e.target.value)); } })) : null;
+  const extVal = h('b', {}, '70 %');
+  const ext = sensors.includes('ext-light') ? h('label', { class: 'apec-mb-sensor' }, '🔆 Luz sobre el sensor (P1) ', extVal,
+    h('input', { type: 'range', min: '0', max: '100', value: '70', 'aria-label': 'Luz que recibe el sensor externo', oninput: (e) => { extVal.textContent = `${e.target.value} %`; onExtLight?.(Number(e.target.value)); } })) : null;
   const board = h('div', { class: 'apec-mb-sim' },
     h('div', { class: 'apec-mb-face' }, bA, matrix, bB,
       h('div', { class: 'apec-mb-pins', 'aria-hidden': 'true' }, h('span', {}, '0'), h('span', {}, '1'), h('span', {}, '2'), h('span', {}, '3V'), h('span', {}, 'GND'))),
-    h('div', { class: 'apec-mb-side' }, btn('SHAKE', 'Sacudir la placa', 'shake'), temp, extLed),
+    h('div', { class: 'apec-mb-side' }, btn('SHAKE', 'Sacudir la placa', 'shake'), temp, ext, extLed),
     shown);
   const update = (sim) => {
     sim.leds.flat().forEach((v, i) => cells[i].classList.toggle('on', Boolean(v)));
@@ -106,13 +111,14 @@ export function renderMbsim(p, ctx, { verdict, highlight, saveCode, loadCode }) 
   const log = h('div', { class: 'apec-console apec-console-sm', 'aria-live': 'polite' }, h('div', { class: 'apec-console-hint' }, 'Acá aparecen los errores del programa.'));
   let sim = null;
   let temp = 21;
+  let extLight = 70;
   const showErr = (err) => {
     log.querySelector('.apec-console-hint')?.remove();
     log.append(h('pre', { class: 'apec-con-err' }, err.toPython()));
     if (err.hint) log.append(h('div', { class: 'apec-con-hint' }, `💡 ${err.hint}`));
     log.scrollTop = log.scrollHeight;
   };
-  const board = microbitBoard({ sensors: p.sensors || [], pins: p.pins, onTrigger: (k) => sim?.trigger(k), onTemp: (v) => { temp = v; sim?.setTemperature(v); } });
+  const board = microbitBoard({ sensors: p.sensors || [], pins: p.pins, onTrigger: (k) => sim?.trigger(k), onTemp: (v) => { temp = v; sim?.setTemperature(v); }, onExtLight: (v) => { extLight = v; sim?.setExtLight(v); } });
   const goalsBox = p.goals ? h('ul', { class: 'apec-mb-goals' }) : null;
   const drawGoals = () => {
     if (!goalsBox) return;
@@ -134,6 +140,7 @@ export function renderMbsim(p, ctx, { verdict, highlight, saveCode, loadCode }) 
     log.querySelectorAll('.apec-con-err, .apec-con-hint, .apec-con-sep').forEach((x) => x.remove());
     sim = new MicrobitSim({ realtime: true, onChange, onLog: (t, err) => { if (err) showErr(err); } });
     sim.setTemperature(temp);
+    sim.setExtLight(extLight);
     sim.inputsUsed.clear();
     const ok = await sim.load(code);
     if (ok) { sim.startForever(); log.append(h('div', { class: 'apec-con-sep ok' }, '▶ programa cargado en la placa')); }
@@ -388,72 +395,279 @@ export function renderWires(p, ctx, { verdict }) {
 }
 
 /* ======================================================================
-   PROTOBOARD
+   CONECTAR A LA PLACA (LED y sensor externo: polos, energía y tierra)
    ====================================================================== */
-export function renderProto(p, ctx, { verdict }) {
-  const parts = {
-    R: { name: 'Resistencia 220 Ω', icon: '〰️', legs: [] },
-    W: { name: 'Cable negro', icon: '➖', legs: [] },
+const PADS = { P0: 110, P1: 210, P2: 310, '3V': 420, GND: 530 };
+const PART_TERMS = {
+  'L+': { x: 140, y: 170, part: 'led', label: '+ pata larga (ánodo)', color: '#e5484d', anchor: 'end', lx: -12 },
+  'L-': { x: 178, y: 158, part: 'led', label: '− pata corta (cátodo)', color: '#9aa7b4', anchor: 'start', lx: 12 },
+  SV: { x: 405, y: 160, part: 'sensor', label: 'VCC +', color: '#e5484d', anchor: 'middle', lx: 0 },
+  SG: { x: 465, y: 160, part: 'sensor', label: 'GND −', color: '#9aa7b4', anchor: 'middle', lx: 0 },
+  SO: { x: 525, y: 160, part: 'sensor', label: 'S señal', color: '#f5c542', anchor: 'middle', lx: 0 },
+};
+
+/** Revisa las conexiones a la placa. wires: [[terminal, pad]] · parts: ['led'] o ['led','sensor'] */
+export function checkPinWiring(wires, parts, power) {
+  const at = (t) => [...new Set(wires.filter(([a]) => a === t).map(([, b]) => b))];
+  const used = Object.keys(PART_TERMS).filter((t) => parts.includes(PART_TERMS[t].part));
+  for (const t of used) if (at(t).length > 1) return { ok: false, msg: `La ${PART_TERMS[t].label} tiene dos cables a lugares distintos. Cada pata va a un solo lugar.` };
+  const one = (t) => at(t)[0] || null;
+  if (parts.includes('sensor')) {
+    const v = one('SV'); const g = one('SG'); const o = one('SO');
+    if (v === 'GND' && g === '3V') return { ok: false, danger: true, msg: '⚠️ Invertiste los polos del sensor: el + está en GND y el − en 3V. ¡Así el sensor se puede dañar!' };
+    if (v && v !== '3V') return { ok: false, msg: v === 'GND' ? '⚠️ El VCC (+) del sensor está en GND (−): polos invertidos.' : 'El VCC (+) del sensor es su alimentación: va a 3V, no a un pin de señal.' };
+    if (g && g !== 'GND') return { ok: false, msg: 'El GND (−) del sensor va a la tierra de la placa: GND.' };
+    if (o === '3V' || o === 'GND') return { ok: false, msg: 'La señal (S) del sensor no va a la alimentación: va a un pin de entrada, el P1.' };
+    if (!v) return { ok: false, msg: 'El sensor no tiene energía: conecta su VCC (+) a 3V.' };
+    if (!g) return { ok: false, msg: 'Al sensor le falta la tierra: conecta su GND (−) al GND de la placa.' };
+    if (!o) return { ok: false, msg: 'Falta conectar la señal (S) del sensor al pin P1, para que la placa pueda leerlo.' };
+    if (o !== 'P1') return { ok: false, msg: 'El programa lee el sensor en el pin P1: conecta ahí la señal (S).' };
+  }
+  const a = one('L+'); const k = one('L-');
+  if (!a || !k) return { ok: false, msg: `Al LED le falta un cable en la ${!a ? 'pata larga (+)' : 'pata corta (−)'}.` };
+  if (a === k) return { ok: false, msg: 'Las dos patas del LED están en el mismo lugar: la corriente no pasa por el LED.' };
+  if (a === 'GND' && k !== 'GND') return { ok: false, msg: 'El LED está al revés: la pata larga (+) va al pin P0 y la pata corta (−) a GND.' };
+  if (k !== 'GND') return { ok: false, msg: 'La pata corta (−) del LED tiene que ir a la tierra: GND.' };
+  if (a === '3V') return { ok: false, msg: 'Así el LED queda prendido siempre: está conectado directo a 3V y el programa no lo puede manejar. Conecta la pata larga al pin P0.' };
+  if (a !== 'P0') return { ok: false, msg: 'El programa maneja el LED desde el pin P0: conecta ahí la pata larga (+).' };
+  if (!power) return { ok: false, msg: 'Las conexiones están bien, pero la placa no tiene energía. Conecta el USB (o la pila) para darle energía.' };
+  return { ok: true, msg: parts.includes('sensor') ? '✔ Todo conectado y con energía: LED en P0 y GND, sensor con 3V, GND y señal en P1.' : '✔ LED bien conectado: pata larga en P0, pata corta en GND. ¡Y la placa tiene energía!' };
+}
+
+export function renderPinwire(p, ctx, { verdict }) {
+  const parts = p.parts;
+  let wires = ctx.done ? [['L+', 'P0'], ['L-', 'GND'], ...(parts.includes('sensor') ? [['SV', '3V'], ['SG', 'GND'], ['SO', 'P1']] : [])] : [];
+  let power = Boolean(ctx.done);
+  let pick = null;
+  let light = 70;
+  let blinkOn = false;
+  let timer = null;
+  const tested = { dark: false, light: false };
+  let passed = Boolean(ctx.done);
+  const box = h('div', { class: 'apec-circuit-svg apec-wires apec-pinwire' });
+  const result = h('p', { class: 'apec-circuit-result', 'aria-live': 'polite' }, 'Toca una pata del componente y después el lugar de la placa donde va.');
+  const goals = p.parts.includes('sensor') ? h('ul', { class: 'apec-mb-goals' }) : null;
+  const status = () => checkPinWiring(wires, parts, power);
+  const ledLit = () => {
+    const st = status();
+    if (!st.ok) return st.msg.startsWith('Así el LED queda prendido') && power;
+    return p.program === 'farol' ? light < 40 : blinkOn;
   };
-  if (ctx.done) { parts.R.legs = ['+3', 'c5']; parts.W.legs = ['b7', '-9']; }
-  let current = 'R';
-  const led = p.led;
-  const result = h('p', { class: 'apec-circuit-result', 'aria-live': 'polite' }, 'Elige un componente y toca dos agujeros para pincharlo.');
-  const grid = h('div', { class: 'apec-proto-board', role: 'grid', 'aria-label': 'Protoboard' });
-  const palette = h('div', { class: 'apec-cl-opts', role: 'radiogroup', 'aria-label': 'Componente a colocar' });
-  const owner = (hole) => {
-    if (hole === led.a) return 'LED+'; if (hole === led.k) return 'LED−';
-    for (const [k, pt] of Object.entries(parts)) if (pt.legs.includes(hole)) return k;
-    return null;
+  const drawGoals = () => {
+    if (!goals) return;
+    const st = status();
+    const items = [[st.ok, 'LED y sensor bien conectados, con energía'], [tested.dark, 'A oscuras (poca luz) el farol se prende'], [tested.light, 'Con luz el farol se apaga']];
+    goals.replaceChildren(...items.map(([ok, t]) => h('li', { class: ok ? 'ok' : '' }, h('span', { 'aria-hidden': 'true' }, ok ? '✅' : '⬜'), h('b', {}, t))));
   };
-  const highlight = (hole, on) => { for (const x of protoNet(hole)) grid.querySelector(`[data-h="${x}"]`)?.classList.toggle('net', on); };
-  const drawPalette = () => palette.replaceChildren(...Object.entries(parts).map(([k, pt]) => h('button', { type: 'button', role: 'radio', 'aria-checked': String(current === k), class: `apec-pill ${current === k ? 'on' : ''}`, onclick: () => { current = k; drawPalette(); result.textContent = `Colocando: ${pt.name}. ${pt.legs.length === 2 ? 'Ya está pinchada: si tocas un agujero, la vuelves a colocar.' : `Toca ${pt.legs.length ? 'el segundo' : 'el primer'} agujero.`}`; } },
-    `${pt.icon} ${pt.name} ${pt.legs.length === 2 ? '✔' : `(${pt.legs.length}/2)`}`)));
-  const hole = (id, extra = '') => {
-    const o = owner(id);
-    const b = h('button', { type: 'button', class: `apec-hole ${extra} ${o ? `has ${o === 'R' ? 'r' : o === 'W' ? 'w' : 'led'}` : ''}`, 'data-h': id, title: id, 'aria-label': `Agujero ${id}${o ? `, ocupado por ${o === 'R' ? 'la resistencia' : o === 'W' ? 'el cable' : o === 'LED+' ? 'la pata larga del LED' : 'la pata corta del LED'}` : ''}` },
-      o === 'LED+' ? '+' : o === 'LED−' ? '−' : o === 'R' ? 'R' : o === 'W' ? '●' : '');
-    b.addEventListener('mouseenter', () => highlight(id, true));
-    b.addEventListener('mouseleave', () => highlight(id, false));
-    b.addEventListener('focus', () => highlight(id, true));
-    b.addEventListener('blur', () => highlight(id, false));
-    b.addEventListener('click', () => {
-      if (o === 'LED+' || o === 'LED−') { result.textContent = 'Ahí ya está una pata del LED.'; return; }
-      const pt = parts[current];
-      if (pt.legs.includes(id)) { pt.legs = pt.legs.filter((x) => x !== id); draw(); return; }
-      if (o) { result.textContent = 'Ese agujero ya está ocupado.'; return; }
-      if (pt.legs.length === 2) pt.legs = [];
-      pt.legs.push(id);
-      result.textContent = pt.legs.length === 1 ? `Primera pata de ${pt.name} en ${id}. Toca el agujero de la otra pata.` : `${pt.name}: de ${pt.legs[0]} a ${pt.legs[1]}.`;
-      draw();
-      highlight(id, true);
-    });
-    return b;
+  const evaluate = () => {
+    const st = status();
+    if (st.ok && p.program === 'farol') { if (light < 40) tested.dark = true; if (light > 60) tested.light = true; }
+    drawGoals();
+    if (st.ok && !passed && (p.program !== 'farol' || (tested.dark && tested.light))) { passed = true; verdict(ctx, true, ''); }
   };
   const draw = () => {
-    grid.replaceChildren();
-    const colHead = h('div', { class: 'apec-proto-row head' }, h('span', { class: 'apec-proto-lbl' }, ''), Array.from({ length: PROTO_COLS }, (_, i) => h('span', { class: 'apec-proto-lbl' }, String(i + 1))));
-    grid.append(colHead);
-    grid.append(h('div', { class: 'apec-proto-row rail plus' }, h('span', { class: 'apec-proto-lbl' }, '+'), Array.from({ length: PROTO_COLS }, (_, i) => hole(`+${i + 1}`, 'rail'))));
-    grid.append(h('div', { class: 'apec-proto-row rail minus' }, h('span', { class: 'apec-proto-lbl' }, '−'), Array.from({ length: PROTO_COLS }, (_, i) => hole(`-${i + 1}`, 'rail'))));
-    for (const r of PROTO_TOP) grid.append(h('div', { class: 'apec-proto-row' }, h('span', { class: 'apec-proto-lbl' }, r), Array.from({ length: PROTO_COLS }, (_, i) => hole(`${r}${i + 1}`))));
-    grid.append(h('div', { class: 'apec-proto-gap', 'aria-hidden': 'true' }, 'canaleta'));
-    for (const r of PROTO_BOTTOM) grid.append(h('div', { class: 'apec-proto-row' }, h('span', { class: 'apec-proto-lbl' }, r), Array.from({ length: PROTO_COLS }, (_, i) => hole(`${r}${i + 1}`))));
-    drawPalette();
+    const lit = ledLit();
+    const st = status();
+    const svg = svgEl('svg', { viewBox: '0 0 640 350', role: 'img', 'aria-label': `Conexiones: ${wires.map(([a, b]) => `${PART_TERMS[a].label} a ${b}`).join(', ') || 'ninguna'}. Placa ${power ? 'con' : 'sin'} energía.` });
+    svg.innerHTML = `
+      <rect x="40" y="246" width="560" height="96" rx="16" fill="rgb(28,30,38)" stroke="rgb(10,12,16)" stroke-width="3"/>
+      <text x="320" y="272" text-anchor="middle" font-size="13" font-weight="800" fill="rgb(200,205,215)">micro:bit</text>
+      <g transform="translate(62 262)">${power ? '<text font-size="20">🔌</text><text x="26" y="-2" font-size="11" fill="rgb(126,231,135)">USB</text>' : '<text font-size="11" y="4" fill="rgb(150,150,160)">sin energía</text>'}</g>
+      ${power ? '<circle cx="580" cy="268" r="5" fill="rgb(255,60,60)"><title>la placa tiene energía</title></circle>' : ''}
+      <g transform="translate(150 60)">
+        ${lit ? '<circle cx="0" cy="10" r="44" fill="rgba(255,60,60,.38)"/>' : ''}
+        <path d="M-22 40 V8 a22 22 0 0 1 44 0 V40 Z" fill="${lit ? '#ff4040' : 'rgba(255,64,64,.3)'}" stroke="currentColor" stroke-width="2.5"/>
+        <rect x="-27" y="38" width="54" height="8" rx="2" fill="${lit ? '#c81e1e' : 'rgba(200,30,30,.35)'}" stroke="currentColor" stroke-width="2"/>
+        <path d="M-10 46 V110 M28 46 V98" stroke="rgb(160,165,175)" stroke-width="4"/>
+        <text x="0" y="-22" text-anchor="middle" font-size="12" fill="currentColor">LED</text>
+      </g>
+      ${parts.includes('sensor') ? `
+      <rect x="382" y="58" width="166" height="74" rx="8" fill="rgb(20,70,140)" stroke="currentColor" stroke-width="2"/>
+      <circle cx="465" cy="88" r="14" fill="rgb(230,200,90)" opacity="${0.35 + light / 160}"/>
+      <text x="465" y="122" text-anchor="middle" font-size="11" font-weight="700" fill="white">Sensor de luz</text>
+      <path d="M405 132 V150 M465 132 V150 M525 132 V150" stroke="rgb(160,165,175)" stroke-width="4"/>` : ''}`;
+    // pads
+    for (const [name, x] of Object.entries(PADS)) {
+      const g = svgEl('g', { class: `apec-term apec-pad ${pick === name ? 'sel' : ''}`, tabindex: '0', role: 'button', 'aria-label': `Conector ${name} de la placa` });
+      g.append(svgEl('rect', { x: x - 30, y: 292, width: 60, height: 44, rx: 6, class: 'apec-pad-rect' }));
+      const t = svgEl('text', { x, y: 320, 'text-anchor': 'middle', 'font-size': 14, 'font-weight': 900, class: 'apec-pad-text' }); t.textContent = name; g.append(t);
+      const act = () => onPick(name, 'pad');
+      g.addEventListener('click', act);
+      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+      svg.append(g);
+    }
+    // cables
+    wires.forEach(([term, pad], i) => {
+      const A = PART_TERMS[term]; const x2 = PADS[pad];
+      const path = svgEl('path', { d: `M${A.x} ${A.y} C ${A.x} ${A.y + 80}, ${x2} ${200}, ${x2} 294`, class: 'apec-wire', style: `stroke:${A.color}`, tabindex: '0', role: 'button', 'aria-label': `Cable de ${A.label} a ${pad}. Toca para quitarlo.` });
+      const remove = () => { wires.splice(i, 1); result.textContent = 'Quitaste un cable.'; draw(); };
+      path.addEventListener('click', remove);
+      path.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); remove(); } });
+      svg.append(path);
+    });
+    // patas de los componentes
+    for (const [id, t] of Object.entries(PART_TERMS)) {
+      if (!parts.includes(t.part)) continue;
+      const g = svgEl('g', { class: `apec-term ${pick === id ? 'sel' : ''}`, tabindex: '0', role: 'button', 'aria-label': `${t.part === 'led' ? 'LED' : 'Sensor'}: ${t.label}` });
+      g.append(svgEl('circle', { cx: t.x, cy: t.y, r: 24, class: 'apec-term-hit' }));
+      g.append(svgEl('circle', { cx: t.x, cy: t.y, r: 11, class: 'apec-term-dot', style: `fill:${t.color}` }));
+      const tx = svgEl('text', { x: t.x + t.lx, y: t.part === 'sensor' ? t.y + 30 : t.y + 4, 'font-size': 12, fill: 'currentColor', 'text-anchor': t.anchor, 'font-weight': 700 });
+      tx.textContent = t.label; g.append(tx);
+      const act = () => onPick(id, 'term');
+      g.addEventListener('click', act);
+      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+      svg.append(g);
+    }
+    box.replaceChildren(svg);
+    if (st.danger) box.classList.add('danger'); else box.classList.remove('danger');
   };
-  const bulb = h('div', { class: 'apec-proto-bulb', 'aria-hidden': 'true' }, '💡');
+  const onPick = (id, kind) => {
+    if (!pick) { pick = { id, kind }; result.textContent = kind === 'pad' ? `Elegiste ${id}. Ahora toca la pata del componente.` : 'Ahora toca el lugar de la placa (P0, P1, P2, 3V o GND).'; draw(); return; }
+    if (pick.kind === kind) { pick = pick.id === id ? null : { id, kind }; draw(); return; }
+    const term = kind === 'term' ? id : pick.id; const pad = kind === 'pad' ? id : pick.id;
+    wires = wires.filter(([t]) => t !== term);
+    wires.push([term, pad]);
+    pick = null;
+    result.textContent = `Conectaste ${PART_TERMS[term].label} a ${pad}.`;
+    draw();
+  };
+  const powerBtn = h('button', { type: 'button', class: 'sqlc-btn' });
+  const setPowerLabel = () => { powerBtn.textContent = power ? '🔌 Desconectar energía' : '🔌 Dar energía (USB)'; powerBtn.classList.toggle('sqlc-btn-run', !power); };
+  powerBtn.addEventListener('click', () => { power = !power; setPowerLabel(); draw(); });
+  setPowerLabel();
+  const lightLabel = h('b', {}, '70 %');
+  const lightCtl = parts.includes('sensor') ? h('label', { class: 'apec-mb-sensor' }, '🔆 Luz ambiente ', lightLabel,
+    h('input', { type: 'range', min: '0', max: '100', value: '70', 'aria-label': 'Luz ambiente sobre el sensor', oninput: (e) => { light = Number(e.target.value); lightLabel.textContent = `${light} %`; draw(); evaluate(); } })) : null;
   const test = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-primary', onclick: () => {
-    const missing = Object.values(parts).filter((pt) => pt.legs.length < 2);
-    if (missing.length) { verdict(ctx, false, `Falta colocar: ${missing.map((pt) => pt.name).join(' y ')} (cada uno tiene 2 patas).`); return; }
-    const links = [...protoLinks(), parts.W.legs];
-    const r = solveCircuit({ links, comps: [{ type: 'LED', a: led.a, b: led.k }, { type: 'R', a: parts.R.legs[0], b: parts.R.legs[1] }], pos: '+1', neg: '-1' });
-    result.textContent = r.message;
-    bulb.className = `apec-proto-bulb ${r.status === 'on' ? 'on' : r.status === 'burnt' ? 'burnt' : ''}`;
-    verdict(ctx, r.status === 'on', p.fail);
-  } }, '⚡ Probar circuito');
+    const st = status();
+    result.textContent = st.msg;
+    draw();
+    if (!st.ok) { verdict(ctx, false, st.msg); return; }
+    if (p.program === 'farol' && !(tested.dark && tested.light)) result.textContent += ' Ahora mueve la luz ambiente: tápala (poca luz) y después ilumínala.';
+    evaluate();
+  } }, '⚡ Probar conexiones');
+  const clear = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-ghost', onclick: () => { wires = []; pick = null; result.textContent = 'Sin cables.'; draw(); } }, 'Quitar cables');
+  if (p.program === 'blink') timer = setInterval(() => { blinkOn = !blinkOn; if (status().ok) draw(); }, 500);
+  ctx.onLeave(() => clearInterval(timer));
   draw();
-  ctx.work.append(h('div', { class: 'apec-proto-wrap' },
-    h('div', { class: 'apec-proto-battery' }, '🔋 Pila 3 V', h('small', {}, '+ al riel rojo · − al riel azul'), bulb),
-    h('div', { class: 'apec-proto-scroll' }, grid)),
-    h('fieldset', { class: 'apec-fieldset' }, h('legend', {}, 'Componente a colocar'), palette), result, h('div', { class: 'apec-row' }, test));
+  drawGoals();
+  ctx.work.append(h('div', { class: 'apec-codeview apec-pinwire-prog' }, h('div', { class: 'apec-codeview-title' }, '📄 Programa que ya tiene la placa'), h('pre', { class: 'apec-code' }, p.programText)),
+    box, h('div', { class: 'apec-row' }, powerBtn, lightCtl), result, goals, h('div', { class: 'apec-row' }, test, clear));
+}
+
+/* ======================================================================
+   ENTRENAR UN MODELO DE IA
+   ====================================================================== */
+export function renderMltrain(p, ctx, { verdict }) {
+  const assign = {};
+  for (const [c, ids] of Object.entries(p.preset || {})) ids.forEach((id) => { assign[id] = Number(c); });
+  if (ctx.done) p.pool.forEach((it) => { if (it.cat !== null && it.cat !== undefined) assign[it.id] = it.cat; });
+  let model = null;
+  let stale = true;
+  const poolBox = h('div', { class: 'apec-ml-pool' });
+  const classBox = h('div', { class: 'apec-ml-classes' });
+  const trainBar = h('div', { class: 'apec-ml-bar' }, h('i', {}));
+  const trainMsg = h('p', { class: 'apec-muted', 'aria-live': 'polite' }, 'Todavía no entrenaste el modelo.');
+  const testBox = h('div', { class: 'apec-ml-tests' });
+  const resultBox = h('div', { class: 'apec-ml-results', 'aria-live': 'polite' });
+  const markStale = () => { if (model) { stale = true; trainMsg.textContent = '⚠️ Cambiaste los ejemplos: vuelve a entrenar el modelo.'; } };
+  const draw = () => {
+    poolBox.replaceChildren(h('div', { class: 'apec-ml-head' }, '📦 Ejemplos sin etiquetar'), ...p.pool.filter((it) => assign[it.id] === undefined).map((it) => h('div', { class: 'apec-ml-tile' },
+      h('span', { class: 'apec-ml-emoji', 'aria-hidden': 'true' }, it.emoji), h('small', {}, it.name),
+      h('div', { class: 'apec-ml-send' }, p.classes.map((c, ci) => h('button', { type: 'button', class: 'apec-pill', title: `Agregar a ${c.name}`, 'aria-label': `Agregar ${it.name} a ${c.name}`, onclick: () => { assign[it.id] = ci; markStale(); draw(); } }, `${c.icon} ${c.name}`))))));
+    if (!p.pool.some((it) => assign[it.id] === undefined)) poolBox.append(h('p', { class: 'apec-muted' }, 'No quedan ejemplos sin etiquetar.'));
+    classBox.replaceChildren(...p.classes.map((c, ci) => {
+      const items = p.pool.filter((it) => assign[it.id] === ci);
+      return h('div', { class: 'apec-ml-class' }, h('div', { class: 'apec-ml-head' }, `${c.icon} ${c.name}`, h('span', { class: 'apec-ml-count' }, `${items.length} ejemplo${items.length === 1 ? '' : 's'}`)),
+        h('div', { class: 'apec-ml-chips' }, items.map((it) => h('button', { type: 'button', class: 'apec-ml-chip', title: 'Quitar de esta clase', 'aria-label': `Quitar ${it.name} de ${c.name}`, onclick: () => { delete assign[it.id]; markStale(); draw(); } }, `${it.emoji} ${it.name} ✕`))),
+        !items.length ? h('small', { class: 'apec-muted' }, 'Sin ejemplos todavía.') : null);
+    }));
+  };
+  const examples = () => p.pool.filter((it) => assign[it.id] !== undefined).map((it) => ({ f: it.f, cat: assign[it.id], item: it }));
+  const bars = (res) => h('div', { class: 'apec-ml-bars' }, p.classes.map((c, ci) => h('div', { class: `apec-ml-barrow ${ci === res.best ? 'best' : ''}` },
+    h('span', {}, `${c.icon} ${c.name}`), h('span', { class: 'apec-ml-track' }, h('i', { style: `width:${res.pct[ci]}%` })), h('b', {}, `${res.pct[ci]} %`))));
+  const train = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-primary', onclick: async () => {
+    const ex = examples();
+    const empty = p.classes.filter((_, ci) => !ex.some((e) => e.cat === ci));
+    if (empty.length) { trainMsg.textContent = `No se puede entrenar: la clase ${empty.map((c) => c.name).join(' y ')} no tiene ejemplos.`; return; }
+    train.disabled = true;
+    const fill = trainBar.querySelector('i');
+    for (let e = 1; e <= 10; e++) { fill.style.width = `${e * 10}%`; trainMsg.textContent = `🧠 Entrenando… época ${e} de 10`; await new Promise((r) => setTimeout(r, 90)); }
+    model = trainModel(ex, p.classes.length, p.model || {});
+    stale = false;
+    train.disabled = false;
+    trainMsg.textContent = `✔ Modelo entrenado con ${ex.length} ejemplos (${p.classes.map((c, ci) => `${c.name}: ${ex.filter((x) => x.cat === ci).length}`).join(', ')}). Ahora pruébalo.`;
+    resultBox.replaceChildren();
+  } }, '🧠 Entrenar modelo');
+  testBox.replaceChildren(h('div', { class: 'apec-ml-head' }, '🔍 Probar con objetos nuevos'), h('div', { class: 'apec-ml-testrow' }, p.test.map((t) => h('button', { type: 'button', class: 'apec-ml-tile test', onclick: () => {
+    if (!model) { resultBox.replaceChildren(h('p', {}, 'Primero entrena el modelo.')); return; }
+    const r = model.predict(t.f);
+    resultBox.replaceChildren(h('p', {}, h('b', {}, `${t.emoji} ${t.name}: `), `el modelo dice ${p.classes[r.best].icon} ${p.classes[r.best].name} con ${r.conf} % de confianza${stale ? ' (modelo viejo: vuelve a entrenar)' : ''}.`), bars(r));
+  } }, h('span', { class: 'apec-ml-emoji', 'aria-hidden': 'true' }, t.emoji), h('small', {}, t.name)))));
+  const check = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-success', onclick: () => {
+    if (!model || stale) { verdict(ctx, false, 'Primero entrena el modelo con los ejemplos actuales.'); return; }
+    const rows = p.test.map((t) => ({ t, r: model.predict(t.f) }));
+    resultBox.replaceChildren(h('p', {}, h('b', {}, 'Prueba con todos los objetos nuevos:')), ...rows.map(({ t, r }) => h('div', { class: `apec-ml-line ${r.best === t.cat && r.conf >= p.minConf ? 'ok' : 'bad'}` },
+      `${t.emoji} ${t.name} → ${p.classes[r.best].icon} ${p.classes[r.best].name} (${r.conf} %) ${r.best === t.cat ? (r.conf >= p.minConf ? '✔' : '· acierta pero con poca confianza') : '✖ se equivoca'}`)));
+    const wrong = rows.filter(({ t, r }) => r.best !== t.cat).length;
+    const low = rows.filter(({ t, r }) => r.best === t.cat && r.conf < p.minConf).length;
+    const mislabeled = examples().filter((e) => e.item.cat !== e.cat);
+    if (wrong) { verdict(ctx, false, `El modelo se equivoca con ${wrong} objeto${wrong === 1 ? '' : 's'}. ${p.fail}`); return; }
+    if (low) { verdict(ctx, false, `Acierta, pero con menos de ${p.minConf} % de confianza. ${p.lowConf}`); return; }
+    if (mislabeled.length) { verdict(ctx, false, `La prueba salió bien, pero hay ejemplos en la clase equivocada (${mislabeled.map((e) => e.item.name).join(', ')}). Con otros objetos el modelo se va a confundir: sácalos o muévelos.`); return; }
+    verdict(ctx, true, '');
+  } }, `✔ Comprobar (meta: ${p.minConf} % o más)`);
+  draw();
+  ctx.work.append(h('ol', { class: 'apec-ml-steps' }, h('li', {}, 'Clases'), h('li', {}, 'Ejemplos'), h('li', {}, 'Entrenar'), h('li', {}, 'Probar')),
+    h('div', { class: 'apec-ml-grid' }, poolBox, classBox),
+    h('div', { class: 'apec-row' }, train, trainBar), trainMsg, testBox, resultBox, h('div', { class: 'apec-row' }, check));
+}
+
+/* ======================================================================
+   PROGRAMAR CON LA CONFIANZA (%) DEL MODELO
+   ====================================================================== */
+export async function runWithModel(code, item) {
+  let out = '';
+  const it = new Interpreter({ globals: { clase: item.clase, confianza: item.conf }, write: (t) => { out += t; } });
+  try { await it.run(code); return { out, error: null }; } catch (e) { return { out, error: e }; }
+}
+
+export function renderMlprog(p, ctx, { verdict, saveCode, loadCode }) {
+  let current = p.cases[0];
+  const ed = codeEditor({ value: loadCode(p.id) ?? p.starter, onInput: (v) => saveCode(p.id, v), onRun: () => runOne(), highlight: (x) => x });
+  const camera = h('div', { class: 'apec-ml-camera', 'aria-live': 'polite' });
+  const action = h('div', { class: 'apec-ml-action', 'aria-live': 'polite' });
+  const log = h('div', { class: 'apec-console apec-console-sm' });
+  const showCase = () => {
+    const others = p.classNames.filter((c) => c !== current.clase);
+    const rest = 100 - current.conf;
+    const pct = { [current.clase]: current.conf, [others[0]]: Math.ceil(rest * 0.6), [others[1]]: rest - Math.ceil(rest * 0.6) };
+    camera.replaceChildren(h('div', { class: 'apec-ml-cam-emoji', 'aria-hidden': 'true' }, current.emoji), h('b', {}, current.name),
+      h('div', { class: 'apec-ml-bars' }, p.classNames.map((c) => h('div', { class: `apec-ml-barrow ${c === current.clase ? 'best' : ''}` }, h('span', {}, c), h('span', { class: 'apec-ml-track' }, h('i', { style: `width:${pct[c]}%` })), h('b', {}, `${pct[c]} %`)))),
+      h('code', { class: 'apec-ml-vars' }, `clase = "${current.clase}"   confianza = ${current.conf}`));
+  };
+  const runOne = async () => {
+    const r = await runWithModel(ed.value, current);
+    log.replaceChildren(h('div', { class: 'apec-con-sep' }, `▶ con ${current.emoji} ${current.name}`), h('pre', { class: 'apec-con-out' }, r.out || '(no mostró nada)'));
+    if (r.error) { log.append(h('pre', { class: 'apec-con-err' }, r.error.toPython?.() || String(r.error))); if (r.error.hint) log.append(h('div', { class: 'apec-con-hint' }, `💡 ${r.error.hint}`)); }
+    action.textContent = r.error ? '🤖 El robot se detuvo por un error.' : `🤖 ${r.out.trim() || '…no hace nada'}`;
+  };
+  const conveyor = h('div', { class: 'apec-ml-testrow' }, p.cases.map((c) => h('button', { type: 'button', class: 'apec-ml-tile test', onclick: () => { current = c; showCase(); runOne(); } }, h('span', { class: 'apec-ml-emoji', 'aria-hidden': 'true' }, c.emoji), h('small', {}, c.name))));
+  const verify = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-primary', onclick: async () => {
+    if (/___/.test(codeWithoutComments(ed.value))) { verdict(ctx, false, 'Todavía quedan espacios <code>___</code> sin completar.'); return; }
+    for (const c of p.cases) {
+      const r = await runWithModel(ed.value, c);
+      if (r.error) { current = c; showCase(); await runOne(); verdict(ctx, false, `Con ${c.emoji} ${c.name} el programa da un error. Míralo abajo.`); return; }
+      const v = p.expect(c, r.out);
+      if (v !== true) { current = c; showCase(); await runOne(); verdict(ctx, false, `Con ${c.emoji} ${c.name} (clase "${c.clase}", confianza ${c.conf} %) ${v}`); return; }
+    }
+    const miss = (p.require || []).find((q) => !q.re.test(codeWithoutComments(ed.value)));
+    if (miss) { verdict(ctx, false, miss.msg); return; }
+    verdict(ctx, true, '');
+  } }, '✔ Verificar con todos los objetos');
+  showCase();
+  ctx.work.append(h('div', { class: 'apec-ml-head' }, '🏭 Cinta de reciclaje: toca un objeto para que la cámara lo vea'), conveyor,
+    h('div', { class: 'apec-mb-layout' }, h('div', {}, camera, action),
+      h('div', { class: 'apec-ide' }, h('div', { class: 'apec-ide-title' }, h('span', {}, '🐍 robot.py'), h('span', { class: 'apec-ide-keys' }, 'Ctrl+Enter: probar con el objeto elegido')),
+        ed.box, h('div', { class: 'apec-toolbar' }, h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-run', onclick: () => runOne() }, '▶ Probar con este objeto'), verify), log)));
 }
