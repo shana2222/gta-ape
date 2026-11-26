@@ -628,8 +628,47 @@ export function renderPinwire(p, ctx, { verdict }) {
    ====================================================================== */
 export function renderMltrain(p, ctx, { verdict }) {
   const assign = {};
+  const reserve = p.reserve || {};
+  const all = [...p.pool, ...Object.values(reserve).flat()];
+  const visible = new Set(p.pool.map((it) => it.id));
+  const requests = [];
   for (const [c, ids] of Object.entries(p.preset || {})) ids.forEach((id) => { assign[id] = Number(c); });
-  if (ctx.done) p.pool.forEach((it) => { if (it.cat !== null && it.cat !== undefined) assign[it.id] = it.cat; });
+  if (ctx.done) all.forEach((it) => { visible.add(it.id); if (it.cat !== null && it.cat !== undefined) assign[it.id] = it.cat; });
+  const shown = () => all.filter((it) => visible.has(it.id));
+  const balanceBox = h('div', { class: 'apec-ml-balance', 'aria-live': 'polite' });
+  const counts = () => p.classes.map((_, ci) => shown().filter((it) => assign[it.id] === ci).length);
+  const biased = () => { const c = counts(); const mn = Math.min(...c); const mx = Math.max(...c); return mn === 0 || mx / mn >= 2; };
+  const drawBalance = () => {
+    const c = counts(); const mx = Math.max(1, ...c); const mn = Math.min(...c);
+    const big = p.classes[c.indexOf(Math.max(...c))]; const small = p.classes[c.indexOf(mn)];
+    const bad = biased();
+    balanceBox.className = `apec-ml-balance ${bad ? 'bad' : 'ok'}`;
+    balanceBox.replaceChildren(h('div', { class: 'apec-ml-head' }, '⚖️ Balance de los datos'),
+      ...p.classes.map((cl, ci) => h('div', { class: 'apec-ml-barrow' }, h('span', {}, `${cl.icon} ${cl.name}`), h('span', { class: 'apec-ml-track' }, h('i', { style: `width:${(c[ci] / mx) * 100}%` })), h('b', {}, String(c[ci])))),
+      h('p', { class: 'apec-ml-balance-msg' }, c.every((x) => x === 0) ? 'Todavía no hay ejemplos.'
+        : bad ? `⚠️ Sesgo: hay ${mn === 0 ? 'una clase sin ejemplos' : `${Math.max(...c)} de ${big.name} y solo ${mn} de ${small.name}`}. El modelo va a tender a decir "${big.name}".`
+          : '✅ Las clases están balanceadas.'));
+  };
+  const requestBox = p.reserve ? h('div', { class: 'apec-ml-request' }) : null;
+  const drawRequest = () => {
+    if (!requestBox) return;
+    requestBox.replaceChildren(h('div', { class: 'apec-ml-head' }, '📷 Pedir más imágenes'),
+      h('p', { class: 'apec-muted' }, '¿Qué tipo de imágenes le faltan al modelo? Pide las que necesites: van a llegar sin etiqueta.'),
+      h('div', { class: 'apec-cl-opts' }, p.classes.map((cl, ci) => {
+        const left = (reserve[ci] || []).filter((it) => !visible.has(it.id)).length;
+        return h('button', { type: 'button', class: 'sqlc-btn', disabled: left ? null : true, onclick: () => {
+          const next = (reserve[ci] || []).filter((it) => !visible.has(it.id)).slice(0, 2);
+          next.forEach((it) => visible.add(it.id));
+          requests.push(ci);
+          const c = counts();
+          const already = c[ci] >= Math.max(...c);
+          trainMsg.textContent = already
+            ? `📷 Llegaron ${next.length} fotos de la clase ${cl.name}. Ojo: ya tenías más fotos de ${cl.name} que de las otras clases; si las agregas, el sesgo aumenta.`
+            : `📷 Llegaron ${next.length} fotos de la clase ${cl.name}. Etiquétalas y vuelve a entrenar.`;
+          draw();
+        } }, `${cl.icon} Pedir fotos de ${cl.name.toLowerCase()} (${left})`);
+      })));
+  };
   let model = null;
   let stale = true;
   const poolBox = h('div', { class: 'apec-ml-pool' });
@@ -640,18 +679,20 @@ export function renderMltrain(p, ctx, { verdict }) {
   const resultBox = h('div', { class: 'apec-ml-results', 'aria-live': 'polite' });
   const markStale = () => { if (model) { stale = true; trainMsg.textContent = '⚠️ Cambiaste los ejemplos: vuelve a entrenar el modelo.'; } };
   const draw = () => {
-    poolBox.replaceChildren(h('div', { class: 'apec-ml-head' }, '📦 Ejemplos sin etiquetar'), ...p.pool.filter((it) => assign[it.id] === undefined).map((it) => h('div', { class: 'apec-ml-tile' },
+    poolBox.replaceChildren(h('div', { class: 'apec-ml-head' }, '📦 Ejemplos sin etiquetar'), ...shown().filter((it) => assign[it.id] === undefined).map((it) => h('div', { class: 'apec-ml-tile' },
       h('span', { class: 'apec-ml-emoji', 'aria-hidden': 'true' }, it.emoji), h('small', {}, it.name),
       h('div', { class: 'apec-ml-send' }, p.classes.map((c, ci) => h('button', { type: 'button', class: 'apec-pill', title: `Agregar a ${c.name}`, 'aria-label': `Agregar ${it.name} a ${c.name}`, onclick: () => { assign[it.id] = ci; markStale(); draw(); } }, `${c.icon} ${c.name}`))))));
-    if (!p.pool.some((it) => assign[it.id] === undefined)) poolBox.append(h('p', { class: 'apec-muted' }, 'No quedan ejemplos sin etiquetar.'));
+    if (!shown().some((it) => assign[it.id] === undefined)) poolBox.append(h('p', { class: 'apec-muted' }, p.reserve ? 'No hay fotos sin etiquetar. Si le faltan datos al modelo, pide más imágenes.' : 'No quedan ejemplos sin etiquetar.'));
     classBox.replaceChildren(...p.classes.map((c, ci) => {
-      const items = p.pool.filter((it) => assign[it.id] === ci);
+      const items = shown().filter((it) => assign[it.id] === ci);
       return h('div', { class: 'apec-ml-class' }, h('div', { class: 'apec-ml-head' }, `${c.icon} ${c.name}`, h('span', { class: 'apec-ml-count' }, `${items.length} ejemplo${items.length === 1 ? '' : 's'}`)),
         h('div', { class: 'apec-ml-chips' }, items.map((it) => h('button', { type: 'button', class: 'apec-ml-chip', title: 'Quitar de esta clase', 'aria-label': `Quitar ${it.name} de ${c.name}`, onclick: () => { delete assign[it.id]; markStale(); draw(); } }, `${it.emoji} ${it.name} ✕`))),
         !items.length ? h('small', { class: 'apec-muted' }, 'Sin ejemplos todavía.') : null);
     }));
+    drawBalance();
+    drawRequest();
   };
-  const examples = () => p.pool.filter((it) => assign[it.id] !== undefined).map((it) => ({ f: it.f, cat: assign[it.id], item: it }));
+  const examples = () => shown().filter((it) => assign[it.id] !== undefined).map((it) => ({ f: it.f, cat: assign[it.id], item: it }));
   const bars = (res) => h('div', { class: 'apec-ml-bars' }, p.classes.map((c, ci) => h('div', { class: `apec-ml-barrow ${ci === res.best ? 'best' : ''}` },
     h('span', {}, `${c.icon} ${c.name}`), h('span', { class: 'apec-ml-track' }, h('i', { style: `width:${res.pct[ci]}%` })), h('b', {}, `${res.pct[ci]} %`))));
   const train = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-primary', onclick: async () => {
@@ -680,14 +721,15 @@ export function renderMltrain(p, ctx, { verdict }) {
     const wrong = rows.filter(({ t, r }) => r.best !== t.cat).length;
     const low = rows.filter(({ t, r }) => r.best === t.cat && r.conf < p.minConf).length;
     const mislabeled = examples().filter((e) => e.item.cat !== e.cat);
-    if (wrong) { verdict(ctx, false, `El modelo se equivoca con ${wrong} objeto${wrong === 1 ? '' : 's'}. ${p.fail}`); return; }
-    if (low) { verdict(ctx, false, `Acierta, pero con menos de ${p.minConf} % de confianza. ${p.lowConf}`); return; }
+    const biasHint = p.reserve && biased() ? ' Mira el medidor de balance: ¿de qué clase tiene pocas imágenes? Pide más de ese tipo.' : '';
+    if (wrong) { verdict(ctx, false, `El modelo se equivoca con ${wrong} objeto${wrong === 1 ? '' : 's'}. ${p.fail}${biasHint}`); return; }
+    if (low) { verdict(ctx, false, `Acierta, pero con menos de ${p.minConf} % de confianza. ${p.lowConf}${biasHint}`); return; }
     if (mislabeled.length) { verdict(ctx, false, `La prueba salió bien, pero hay ejemplos en la clase equivocada (${mislabeled.map((e) => e.item.name).join(', ')}). Con otros objetos el modelo se va a confundir: sácalos o muévelos.`); return; }
     verdict(ctx, true, '');
   } }, `✔ Comprobar (meta: ${p.minConf} % o más)`);
   draw();
   ctx.work.append(h('ol', { class: 'apec-ml-steps' }, h('li', {}, 'Clases'), h('li', {}, 'Ejemplos'), h('li', {}, 'Entrenar'), h('li', {}, 'Probar')),
-    h('div', { class: 'apec-ml-grid' }, poolBox, classBox),
+    h('div', { class: 'apec-ml-grid' }, h('div', { class: 'apec-ml-col' }, requestBox, poolBox), h('div', { class: 'apec-ml-col' }, balanceBox, classBox)),
     h('div', { class: 'apec-row' }, train, trainBar), trainMsg, testBox, resultBox, h('div', { class: 'apec-row' }, check));
 }
 
@@ -709,7 +751,11 @@ export function renderMlprog(p, ctx, { verdict, saveCode, loadCode }) {
   const showCase = () => {
     const others = p.classNames.filter((c) => c !== current.clase);
     const rest = 100 - current.conf;
-    const pct = { [current.clase]: current.conf, [others[0]]: Math.ceil(rest * 0.6), [others[1]]: rest - Math.ceil(rest * 0.6) };
+    const pct = { [current.clase]: current.conf };
+    const weights = others.map((_, i) => 0.6 ** i);
+    const wsum = weights.reduce((a, b) => a + b, 0);
+    let given = 0;
+    others.forEach((c, i) => { const v = i === others.length - 1 ? rest - given : Math.round((rest * weights[i]) / wsum); pct[c] = v; given += v; });
     camera.replaceChildren(h('div', { class: 'apec-ml-cam-emoji', 'aria-hidden': 'true' }, current.emoji), h('b', {}, current.name),
       h('div', { class: 'apec-ml-bars' }, p.classNames.map((c) => h('div', { class: `apec-ml-barrow ${c === current.clase ? 'best' : ''}` }, h('span', {}, c), h('span', { class: 'apec-ml-track' }, h('i', { style: `width:${pct[c]}%` })), h('b', {}, `${pct[c]} %`)))),
       h('code', { class: 'apec-ml-vars' }, `clase = "${current.clase}"   confianza = ${current.conf}`));

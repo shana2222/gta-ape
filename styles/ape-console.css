@@ -546,3 +546,11 @@
 @media (max-width: 900px) { .apec-sim-wide { grid-template-columns: 1fr; } }
 .apec-mb-layout-blocks .apec-mb-side { flex-direction: column; align-items: stretch; }
 .apec-mb-layout-blocks .apec-mb-sim { max-width: 330px; }
+.apec-ml-col { display: grid; gap: 10px; align-content: start; }
+.apec-ml-balance, .apec-ml-request { background: var(--c-panel); border: 2px solid var(--c-border); border-radius: 14px; padding: 8px 12px; }
+.apec-ml-balance.bad { border-color: var(--c-warn); }
+.apec-ml-balance.ok { border-color: var(--c-success); }
+.apec-ml-balance-msg { margin: 6px 0 0; font-weight: 700; font-size: 14px; }
+.apec-ml-balance.bad .apec-ml-balance-msg { color: var(--c-warn); }
+.apec-ml-balance .apec-ml-track i { background: var(--c-neon); }
+.apec-ml-request .apec-muted { margin: 0 0 8px; font-size: 14px; }

@@ -414,11 +414,11 @@ export const MISSIONS = [
       { title: '¿Qué es la IA?', html: `<p>La <b>inteligencia artificial</b> son programas que hacen tareas que antes solo hacían las personas: reconocer caras, entender la voz, traducir, recomendar videos.</p>
         <p class="apec-tip">💡 La IA <b>no piensa ni siente</b>: encuentra patrones en muchos datos.</p>` },
       { title: 'Machine Learning', html: `<p>En la programación común, <b>nosotros escribimos las reglas</b>. En ML, le damos a la computadora <b>muchos ejemplos</b> y ella <b>descubre las reglas</b> sola.</p>
-        <ol class="apec-steps"><li><b>Clases</b>: qué tiene que reconocer (plástico, papel, vidrio).</li><li><b>Ejemplos</b>: muchos objetos de cada clase, con su <b>etiqueta</b>.</li><li><b>Entrenar</b>: la computadora busca los patrones.</li><li><b>Probar</b>: con objetos <b>nuevos</b>, que no vio.</li></ol>
+        <ol class="apec-steps"><li><b>Clases</b>: qué tiene que reconocer (plástico, papel, vidrio, orgánico).</li><li><b>Ejemplos</b>: muchos objetos de cada clase, con su <b>etiqueta</b>.</li><li><b>Entrenar</b>: la computadora busca los patrones.</li><li><b>Probar</b>: con objetos <b>nuevos</b>, que no vio.</li></ol>
         <p>Es lo mismo que haces en <b>Teachable Machine</b> o <b>Machine Learning for Kids</b>.</p>` },
       { title: 'La confianza (%)', html: `<p>Cuando el modelo mira algo nuevo, no dice solo "es plástico": da un <b>porcentaje para cada clase</b>.</p>
-        <div class="apec-ex">🧴 → Plástico <b>86 %</b> · Papel 9 % · Vidrio 5 %</div>
-        <ul><li>Con <b>pocos ejemplos</b>, el modelo duda: los % quedan parejos.</li><li>Con <b>más ejemplos y bien etiquetados</b>, la confianza sube.</li><li>Si una clase tiene <b>muchos más ejemplos</b> que otra, el modelo tiende a elegirla: eso es <b>sesgo</b>.</li></ul>` },
+        <div class="apec-ex">🧴 → Plástico <b>86 %</b> · Papel 8 % · Vidrio 4 % · Orgánico 2 %</div>
+        <ul><li>Con <b>pocos ejemplos</b>, el modelo duda: los % quedan parejos.</li><li>Con <b>más ejemplos y bien etiquetados</b>, la confianza sube.</li><li>Si una clase tiene <b>muchos más ejemplos</b> que otra, el modelo tiende a elegirla: eso es <b>sesgo</b>. La solución es <b>conseguir más datos</b> de la clase que falta.</li></ul>` },
       { title: 'Programar con el %', html: `<p>Una IA útil <b>hace algo</b> con lo que reconoce. Pero si no está segura, conviene no actuar:</p>
         <pre class="apec-code">if confianza &gt;= 80:
     if clase == "plastico":
@@ -435,21 +435,24 @@ else:
     ],
     phases: [
       {
-        id: 'm6-a', title: 'Entrenar el clasificador de reciclaje', type: 'mltrain', minConf: 80,
+        id: 'm6-a', title: 'Entrenar el clasificador de residuos', type: 'mltrain', minConf: 80,
         prompt: `<p>Tecla está armando una <b>cinta de reciclaje inteligente</b>. Pon ejemplos en cada clase, <b>entrena</b> el modelo y <b>pruébalo</b> con objetos nuevos.</p>
-          <p class="apec-tip">Meta: que reconozca los 3 objetos nuevos con <b>80 % o más</b> de confianza. Mira qué pasa con el % cuando agregas más ejemplos. ¡Ojo con lo que no es reciclable!</p>`,
-        classes: [{ name: 'Plástico', icon: '🟨' }, { name: 'Papel', icon: '🟦' }, { name: 'Vidrio', icon: '🟩' }],
+          <p class="apec-tip">Meta: que reconozca los 4 objetos nuevos con <b>80 % o más</b> de confianza. Mira qué pasa con el % cuando agregas más ejemplos a cada clase.</p>`,
+        classes: [{ name: 'Plástico', icon: '🟨' }, { name: 'Papel', icon: '🟦' }, { name: 'Vidrio', icon: '🟩' }, { name: 'Orgánico', icon: '🟫' }],
         pool: [
           { id: 'p1', emoji: '🥤', name: 'Vaso descartable', f: [0.95, 0.1, 0.05, 0], cat: 0 },
           { id: 'q1', emoji: '📄', name: 'Hoja', f: [0.1, 0.9, 0, 0], cat: 1 },
           { id: 'v1', emoji: '🍾', name: 'Botella de vidrio', f: [0.1, 0, 0.95, 0], cat: 2 },
+          { id: 'o1', emoji: '🍌', name: 'Cáscara de banana', f: [0.1, 0.15, 0, 1], cat: 3 },
           { id: 'p2', emoji: '🛍️', name: 'Bolsa', f: [0.85, 0.05, 0.15, 0], cat: 0 },
           { id: 'q2', emoji: '📦', name: 'Caja de cartón', f: [0.05, 1, 0.1, 0], cat: 1 },
-          { id: 'x1', emoji: '🍌', name: 'Cáscara de banana', f: [0.1, 0.15, 0, 1], cat: null },
+          { id: 'o2', emoji: '🍎', name: 'Corazón de manzana', f: [0.05, 0.1, 0, 0.95], cat: 3 },
           { id: 'v2', emoji: '🫙', name: 'Frasco', f: [0, 0.1, 0.9, 0], cat: 2 },
           { id: 'p3', emoji: '🧴', name: 'Botella de shampoo', f: [0.9, 0.2, 0, 0], cat: 0 },
+          { id: 'o3', emoji: '🥚', name: 'Cáscaras de huevo', f: [0.1, 0, 0.15, 0.9], cat: 3 },
           { id: 'q3', emoji: '📰', name: 'Diario', f: [0.2, 0.85, 0, 0], cat: 1 },
           { id: 'v3', emoji: '🍷', name: 'Copa', f: [0.15, 0, 1, 0], cat: 2 },
+          { id: 'o4', emoji: '🍂', name: 'Hojas secas', f: [0, 0.2, 0, 0.9], cat: 3 },
           { id: 'p4', emoji: '🪣', name: 'Balde', f: [1, 0, 0.1, 0], cat: 0 },
           { id: 'q4', emoji: '✉️', name: 'Sobre', f: [0, 0.95, 0.05, 0], cat: 1 },
           { id: 'v4', emoji: '🥛', name: 'Vaso de vidrio', f: [0.05, 0.05, 0.85, 0], cat: 2 },
@@ -458,15 +461,16 @@ else:
           { emoji: '🧃', name: 'Envase de yogur', f: [0.9, 0.05, 0.1, 0], cat: 0 },
           { emoji: '🗞️', name: 'Revista', f: [0.1, 0.9, 0.05, 0], cat: 1 },
           { emoji: '🏺', name: 'Jarrón', f: [0.05, 0.1, 0.9, 0], cat: 2 },
+          { emoji: '🍐', name: 'Restos de pera', f: [0.05, 0.1, 0.05, 0.9], cat: 3 },
         ],
         model: { T: 0.3, prior: 1 },
         fail: 'Revisa que cada clase tenga ejemplos correctos.',
         lowConf: 'Con pocos ejemplos el modelo duda. Agrega más ejemplos a cada clase y vuelve a entrenar.',
       },
       {
-        id: 'm6-b', title: 'Corregir el sesgo', type: 'mltrain', minConf: 75,
-        prompt: `<p>Pixel entrenó un modelo para la veterinaria que reconoce <b>perros y gatos</b>, pero lo entrenó con <b>7 perros y 1 solo gato</b>. Entrénalo así y pruébalo: ¿qué pasa con los gatos?</p>
-          <p>Después <b>corrige los datos</b> para que reconozca los 3 animales nuevos con <b>75 % o más</b>.</p>`,
+        id: 'm6-b', title: 'Detectar y corregir el sesgo', type: 'mltrain', minConf: 75,
+        prompt: `<p>Pixel tiene los datos para un modelo de la veterinaria que reconoce <b>perros y gatos</b>: <b>7 fotos de perros y 1 sola de gato</b>. <b>Entrénalo</b> y pruébalo: ¿qué pasa con los gatos? Mira el <b>medidor de balance</b>.</p>
+          <p>Después <b>pide más imágenes</b> del tipo que le falta al modelo, etiquétalas y vuelve a entrenar hasta que reconozca los 3 animales nuevos con <b>75 % o más</b>.</p>`,
         classes: [{ name: 'Perro', icon: '🐶' }, { name: 'Gato', icon: '🐱' }],
         pool: [
           { id: 'd1', emoji: '🐕', name: 'Perro 1', f: [0.3, 0.8, 0.7], cat: 0 }, { id: 'd2', emoji: '🐩', name: 'Caniche', f: [0.4, 0.9, 0.5], cat: 0 },
@@ -474,10 +478,13 @@ else:
           { id: 'd5', emoji: '🐶', name: 'Cachorro', f: [0.5, 0.75, 0.4], cat: 0 }, { id: 'd6', emoji: '🐕', name: 'Perro 2', f: [0.3, 0.9, 0.8], cat: 0 },
           { id: 'd7', emoji: '🐩', name: 'Perro 3', f: [0.45, 0.7, 0.5], cat: 0 },
           { id: 'c1', emoji: '🐈', name: 'Gato 1', f: [0.9, 0.2, 0.2], cat: 1 },
-          { id: 'c2', emoji: '🐈‍⬛', name: 'Gato negro', f: [0.85, 0.3, 0.25], cat: 1 }, { id: 'c3', emoji: '🐱', name: 'Gatito', f: [0.95, 0.25, 0.15], cat: 1 },
-          { id: 'c4', emoji: '🐈', name: 'Gato 2', f: [0.8, 0.2, 0.3], cat: 1 }, { id: 'c5', emoji: '😺', name: 'Gato 3', f: [0.9, 0.35, 0.2], cat: 1 },
-          { id: 'c6', emoji: '🐈‍⬛', name: 'Gato 4', f: [0.85, 0.15, 0.25], cat: 1 },
         ],
+        reserve: {
+          0: [{ id: 'd8', emoji: '🐕', name: 'Perro 4', f: [0.35, 0.8, 0.65], cat: 0 }, { id: 'd9', emoji: '🐶', name: 'Perro 5', f: [0.4, 0.85, 0.55], cat: 0 }, { id: 'd10', emoji: '🦮', name: 'Perro 6', f: [0.25, 0.75, 0.8], cat: 0 }, { id: 'd11', emoji: '🐩', name: 'Perro 7', f: [0.4, 0.8, 0.45], cat: 0 }],
+          1: [{ id: 'c2', emoji: '🐈‍⬛', name: 'Gato negro', f: [0.85, 0.3, 0.25], cat: 1 }, { id: 'c3', emoji: '🐱', name: 'Gatito', f: [0.95, 0.25, 0.15], cat: 1 },
+            { id: 'c4', emoji: '🐈', name: 'Gato 2', f: [0.8, 0.2, 0.3], cat: 1 }, { id: 'c5', emoji: '😺', name: 'Gato 3', f: [0.9, 0.35, 0.2], cat: 1 },
+            { id: 'c6', emoji: '🐈‍⬛', name: 'Gato 4', f: [0.85, 0.15, 0.25], cat: 1 }, { id: 'c7', emoji: '🐱', name: 'Gato 5', f: [0.88, 0.22, 0.28], cat: 1 }],
+        },
         preset: { 0: ['d1', 'd2', 'd3', 'd4', 'd5', 'd6', 'd7'], 1: ['c1'] },
         test: [
           { emoji: '😸', name: 'Gata de Byte', f: [0.78, 0.33, 0.28], cat: 1 },
@@ -485,29 +492,30 @@ else:
           { emoji: '🐕', name: 'Perro de Rayo', f: [0.35, 0.8, 0.6], cat: 0 },
         ],
         model: { T: 0.25, prior: 1.3 },
-        fail: 'Hay muchos más perros que gatos: el modelo tiende a decir "perro". Agrega ejemplos de gatos para balancear las clases.',
-        lowConf: 'Las clases todavía están desbalanceadas. Agrega más gatos (o saca algunos perros) y vuelve a entrenar.',
+        fail: 'Hay muchos más perros que gatos: el modelo tiende a decir "perro".',
+        lowConf: 'Las clases todavía no están balanceadas.',
       },
       {
         id: 'm6-c', title: 'Programar con la confianza', type: 'mlprog',
-        prompt: `<p>El modelo ya está entrenado. El robot de la cinta recibe dos variables: <code>clase</code> (<code>"plastico"</code>, <code>"papel"</code> o <code>"vidrio"</code>) y <code>confianza</code> (de 0 a 100).</p>
-          <p>Programa el robot: si la confianza es de <b>80 o más</b>, manda el objeto al contenedor de su clase (<b>amarillo</b> plástico, <b>azul</b> papel, <b>verde</b> vidrio). Si es <b>menor a 80</b>, que lo deje para que lo <b>revise</b> una persona.</p>`,
-        classNames: ['plastico', 'papel', 'vidrio'],
+        prompt: `<p>El modelo ya está entrenado. El robot de la cinta recibe dos variables: <code>clase</code> (<code>"plastico"</code>, <code>"papel"</code>, <code>"vidrio"</code> u <code>"organico"</code>) y <code>confianza</code> (de 0 a 100).</p>
+          <p>Programa el robot: si la confianza es de <b>80 o más</b>, manda el objeto al contenedor de su clase (<b>amarillo</b> plástico, <b>azul</b> papel, <b>verde</b> vidrio, <b>marrón</b> orgánico). Si es <b>menor a 80</b>, que lo deje para que lo <b>revise</b> una persona.</p>`,
+        classNames: ['plastico', 'papel', 'vidrio', 'organico'],
         cases: [
           { emoji: '🧴', name: 'Envase de detergente', clase: 'plastico', conf: 93 },
           { emoji: '🗞️', name: 'Revista', clase: 'papel', conf: 88 },
           { emoji: '🫙', name: 'Frasco', clase: 'vidrio', conf: 91 },
-          { emoji: '🧸', name: 'Peluche', clase: 'plastico', conf: 46 },
+          { emoji: '🍌', name: 'Cáscara de banana', clase: 'organico', conf: 95 },
+          { emoji: '🧃', name: 'Cartón de jugo (material mixto)', clase: 'papel', conf: 58 },
           { emoji: '🍕', name: 'Caja de pizza con grasa', clase: 'papel', conf: 61 },
-          { emoji: '🥫', name: 'Lata', clase: 'vidrio', conf: 79 },
-          { emoji: '🥤', name: 'Vaso', clase: 'plastico', conf: 80 },
+          { emoji: '🍂', name: 'Hojas secas con tierra', clase: 'organico', conf: 79 },
+          { emoji: '🥤', name: 'Vaso descartable', clase: 'plastico', conf: 80 },
         ],
-        starter: '# clase y confianza las da el modelo entrenado\nif confianza >= ___:\n    if clase == "plastico":\n        print("Contenedor amarillo")\n    elif clase == "papel":\n        print("Contenedor ___")\n    # completa: vidrio va al contenedor verde\nelse:\n    print("Revisar a mano")\n',
+        starter: '# clase y confianza las da el modelo entrenado\nif confianza >= ___:\n    if clase == "plastico":\n        print("Contenedor amarillo")\n    elif clase == "papel":\n        print("Contenedor ___")\n    elif clase == "vidrio":\n        print("Contenedor verde")\n    # completa: organico va al contenedor marrón\nelse:\n    print("Revisar a mano")\n',
         expect: (c, out) => {
           const o = norm(out);
-          const want = c.conf >= 80 ? { plastico: 'amarillo', papel: 'azul', vidrio: 'verde' }[c.clase] : 'revis';
-          const all = ['amarillo', 'azul', 'verde', 'revis'];
-          if (!o.includes(want)) return c.conf >= 80 ? `tiene que ir al contenedor ${want}.` : 'la confianza es menor a 80: tiene que quedar para revisar.';
+          const want = c.conf >= 80 ? { plastico: 'amarillo', papel: 'azul', vidrio: 'verde', organico: 'marron' }[c.clase] : 'revis';
+          const all = ['amarillo', 'azul', 'verde', 'marron', 'revis'];
+          if (!o.includes(want)) return c.conf >= 80 ? `tiene que ir al contenedor ${want === 'marron' ? 'marrón' : want}.` : 'la confianza es menor a 80: tiene que quedar para revisar.';
           const extra = all.filter((w) => w !== want && o.includes(w));
           if (extra.length) return `el robot hace más de una cosa (${extra.join(', ')}). Tiene que hacer solo una.`;
           return true;

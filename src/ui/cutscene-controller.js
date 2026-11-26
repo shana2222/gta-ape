@@ -6,7 +6,7 @@ import {
   setUiInputMode,
 } from './input-mode.js?v=1';
 import { WebModalController } from './web-modal.js?v=1';
-import { openSqlChallenge } from '../ape/ape-console.js?v=5';
+import { openSqlChallenge } from '../ape/ape-console.js?v=6';
 
 export class CutsceneController {
   constructor() {

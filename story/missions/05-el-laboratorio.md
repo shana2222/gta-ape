@@ -29,9 +29,9 @@ bg: Laboratorio de IA de la Colina
 - Pixel: Hola, Byte. ¿Trajiste los datos?
 - Byte: Acá están:
 - ENTREGAR: pendrive-datos
-- Pixel: La cinta de reciclaje reconocía plástico, papel y vidrio. Desde el apagón no reconoce nada: hay que entrenarla de nuevo.
+- Pixel: La cinta de reciclaje reconocía plástico, papel, vidrio y orgánico. Desde el apagón no reconoce nada: hay que entrenarla de nuevo.
 - Byte: ¿Se olvidó de lo que aprendió?
-- Pixel: Y el modelo de la veterinaria tiene sesgo: lo entrenaron con muchos perros y casi ningún gato. Un modelo aprende de los datos que le das. Si los datos están mal…
+- Pixel: Y el modelo de la veterinaria tiene sesgo: lo entrenaron con muchos perros y casi ningún gato. Vas a tener que pedir las fotos que faltan. Un modelo aprende de los datos que le das. Si los datos están mal…
 - Byte: …el modelo aprende mal. Basura entra, basura sale.
 - APE: mision-5
 - Pixel: ¡Entrenado, probado y programado! Ahora el robot solo actúa cuando está seguro.

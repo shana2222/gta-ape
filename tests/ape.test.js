@@ -231,28 +231,34 @@ test('conexiones a la placa: polos, tierra, energía y sensor', async () => {
 });
 
 const mlRun = (p, ids) => {
-  const ex = p.pool.filter((it) => ids.includes(it.id)).map((it) => ({ f: it.f, cat: it.cat }));
+  const all = [...p.pool, ...Object.values(p.reserve || {}).flat()];
+  const ex = all.filter((it) => ids.includes(it.id)).map((it) => ({ f: it.f, cat: it.cat }));
   const m = trainModel(ex, p.classes.length, p.model);
   return p.test.every((t) => { const r = m.predict(t.f); return r.best === t.cat && r.conf >= p.minConf; });
 };
 
 test('IA: más ejemplos suben la confianza y el desbalance genera sesgo', () => {
   const rec = PHASES.find((x) => x.id === 'm6-a');
-  const byCat = (n) => rec.pool.filter((it) => it.cat !== null).reduce((acc, it) => { if (acc.filter((id) => rec.pool.find((q) => q.id === id).cat === it.cat).length < n) acc.push(it.id); return acc; }, []);
+  assert.equal(rec.classes.length, 4);
+  assert.ok(rec.pool.some((it) => it.name.includes('banana') && it.cat === 3), 'la cáscara va en orgánico');
+  const byCat = (n) => rec.classes.flatMap((_, c) => rec.pool.filter((it) => it.cat === c).slice(0, n).map((it) => it.id));
   assert.equal(mlRun(rec, byCat(1)), false);
   assert.equal(mlRun(rec, byCat(2)), false);
-  assert.equal(mlRun(rec, byCat(3)), true);
+  assert.equal(mlRun(rec, byCat(4)), true);
   const bias = PHASES.find((x) => x.id === 'm6-b');
   const preset = [...bias.preset[0], ...bias.preset[1]];
   assert.equal(mlRun(bias, preset), false, 'con 7 perros y 1 gato no debería pasar');
-  assert.equal(mlRun(bias, bias.pool.map((it) => it.id)), true, 'balanceado debería pasar');
+  const moreDogs = [...preset, ...bias.reserve[0].map((it) => it.id)];
+  assert.equal(mlRun(bias, moreDogs), false, 'pidiendo más perros el sesgo empeora');
+  const moreCats = [...preset, ...bias.reserve[1].map((it) => it.id)];
+  assert.equal(mlRun(bias, moreCats), true, 'pidiendo gatos se corrige');
 });
 
 test('IA: programar con la confianza', async () => {
   const { runWithModel } = await import('../src/ape/sim-ui.js');
   const p = PHASES.find((x) => x.id === 'm6-c');
   const check = async (code) => { for (const c of p.cases) { const r = await runWithModel(code, c); if (r.error || p.expect(c, r.out) !== true) return false; } return true; };
-  const good = 'if confianza >= 80:\n    if clase == "plastico":\n        print("Contenedor amarillo")\n    elif clase == "papel":\n        print("Contenedor azul")\n    else:\n        print("Contenedor verde")\nelse:\n    print("Revisar a mano")';
+  const good = 'if confianza >= 80:\n    if clase == "plastico":\n        print("Contenedor amarillo")\n    elif clase == "papel":\n        print("Contenedor azul")\n    elif clase == "vidrio":\n        print("Contenedor verde")\n    else:\n        print("Contenedor marrón")\nelse:\n    print("Revisar a mano")';
   const bad = 'if clase == "plastico":\n    print("Contenedor amarillo")\nelif clase == "papel":\n    print("Contenedor azul")\nelse:\n    print("Contenedor verde")';
   assert.equal(await check(good), true);
   assert.equal(await check(bad), false);
