@@ -121,3 +121,73 @@ test('toda la historia parsea y cada misión abre su consola APE', () => {
     assert.ok(e);
   }
 });
+
+/* ---------------- simuladores de placas y circuitos ---------------- */
+import { MicrobitSim } from '../src/ape/microbit-sim.js';
+import { solveCircuit, protoLinks } from '../src/ape/circuit-sim.js';
+import { codeWithoutComments } from '../src/ape/python-mini.js';
+
+async function verifyMb(p, code) {
+  if (/___/.test(codeWithoutComments(code))) return false;
+  let err = null;
+  const sim = new MicrobitSim({ seed: 11, onLog: (t, e) => { if (e && !err) err = e; } });
+  await sim.load(code);
+  if (err) return false;
+  const r = await p.check(sim);
+  if (err || r !== true) return false;
+  return (p.require || []).every((q) => q.re.test(codeWithoutComments(code)));
+}
+
+const MB_SOLUTIONS = {
+  'm3-b': ['led.plot(2, 0)\nfor x in range(1, 4):\n    led.plot(x, 1)\nled.plot(0, 2)\nled.plot(2, 2)\nled.plot(4, 2)\nled.plot(2, 3)\nled.plot(2, 4)', 'led.plot(2, 0)\nled.plot(2, 1)'],
+  'm3-c': ['def al_sacudir():\n    basic.show_number(randint(1, 6))\ninput.on_gesture(Gesture.SHAKE, al_sacudir)', 'def al_sacudir():\n    basic.show_number(randint(0, 9))\ninput.on_gesture(Gesture.SHAKE, al_sacudir)'],
+  'm5-c': ['def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    pins.digital_write_pin(DigitalPin.P0, 0)\n    basic.pause(500)\nbasic.forever(para_siempre)', 'def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    pins.digital_write_pin(DigitalPin.P0, 0)\nbasic.forever(para_siempre)'],
+  'b-iti-2': ['def al_presionar_b():\n    basic.show_number(input.temperature())\ninput.on_button_pressed(Button.B, al_presionar_b)', 'def al_presionar_b():\n    basic.show_number(21)\ninput.on_button_pressed(Button.B, al_presionar_b)'],
+};
+
+test('cada actividad de micro:bit acepta una solución y rechaza otra incorrecta', async () => {
+  const mb = [...PHASES, ...BONUS].filter((p) => p.type === 'mbsim' && p.mode === 'code');
+  assert.equal(mb.length, Object.keys(MB_SOLUTIONS).length);
+  for (const p of mb) {
+    const [good, bad] = MB_SOLUTIONS[p.id];
+    assert.equal(await verifyMb(p, good), true, `${p.id}: la solución correcta no pasa`);
+    assert.equal(await verifyMb(p, bad), false, `${p.id}: la incorrecta pasa`);
+    assert.equal(await verifyMb(p, p.starter), false, `${p.id}: el código inicial ya pasa`);
+  }
+});
+
+test('explorar la placa: el programa cargado cumple las 4 metas con sus entradas', async () => {
+  const p = PHASES.find((x) => x.id === 'm3-a');
+  const sim = new MicrobitSim({ seed: 3 });
+  assert.equal(await sim.load(p.code), true);
+  await sim.trigger('A'); await sim.trigger('B'); await sim.trigger('SHAKE');
+  sim.setTemperature(35); await sim.advance(3000);
+  assert.ok(p.goals.every((g) => g.done(sim)));
+});
+
+test('micro:bit: falta de global da UnboundLocalError con pista', async () => {
+  let err = null;
+  const sim = new MicrobitSim({ onLog: (t, e) => { err = e; } });
+  await sim.load('c = 0\ndef a():\n    c += 1\ninput.on_button_pressed(Button.A, a)');
+  await sim.trigger('A');
+  assert.equal(err.pyType, 'UnboundLocalError');
+  assert.match(err.hint, /global/);
+});
+
+test('solucionador de circuitos: cerrado, abierto, invertido, quemado, corto y protoboard', () => {
+  const comps = (closed) => [{ type: 'R', a: 'R1', b: 'R2' }, { type: 'LED', a: 'LA', b: 'LK' }, { type: 'SW', a: 'S1', b: 'S2', closed }];
+  const solve = (links, closed = true) => solveCircuit({ links, comps: comps(closed), pos: 'B+', neg: 'B-' }).status;
+  const ok = [['B+', 'S1'], ['S2', 'R1'], ['R2', 'LA'], ['LK', 'B-']];
+  assert.equal(solve(ok), 'on');
+  assert.equal(solve(ok, false), 'open');
+  assert.equal(solve([['B+', 'S1'], ['S2', 'R1'], ['R2', 'LK'], ['LA', 'B-']]), 'reversed');
+  assert.equal(solve([['B+', 'LA'], ['LK', 'B-']]), 'burnt');
+  assert.equal(solve([['B+', 'S1'], ['S2', 'B-']]), 'short');
+  assert.equal(solve([['B+', 'R1'], ['R2', 'B-']]), 'bypass');
+  const led = { type: 'LED', a: 'e5', b: 'e7' };
+  const proto = (r, w) => solveCircuit({ links: [...protoLinks(), w], comps: [led, { type: 'R', a: r[0], b: r[1] }], pos: '+1', neg: '-1' }).status;
+  assert.equal(proto(['+3', 'c5'], ['b7', '-9']), 'on');
+  assert.equal(proto(['+3', 'f5'], ['b7', '-9']), 'open');
+  assert.equal(proto(['+3', 'c5'], ['f7', '-9']), 'open');
+  assert.equal(proto(['c7', '-2'], ['a5', '+4']), 'on');
+});

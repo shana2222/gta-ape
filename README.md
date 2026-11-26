@@ -33,9 +33,9 @@ Al tercer intento fallido, la actividad sugiere volver a la explicación.
 |---|---|---|
 | 1. Pensar como programador | Pensamiento computacional y las 4 fases de Polya | Ordenar las fases · Clasificar acciones por fase · Desafío tipo Bebras |
 | 2. El proceso computacional | Entrada → Proceso → Salida, algoritmo, secuencia/condición/repetición | Clasificar E/P/S · Ordenar un algoritmo · Identificar estructuras |
-| 3. La placa micro:bit | Placas programables: entradas, salidas, coordenadas de la matriz, eventos | Clasificar partes · Dibujar con `led.plot(x, y)` · Leer un programa |
-| 4. Periféricos y corriente | Periféricos E/S, conexiones (USB, HDMI, Bluetooth, pines), voltaje/corriente/resistencia | Clasificar periféricos · Elegir la conexión · Analogía del agua |
-| 5. Encender un LED | Componentes, polaridad del LED, protoboard, LED en un pin de la micro:bit (Tinkercad) | Simulador de circuito · Protoboard · Programa para parpadear |
+| 3. La placa micro:bit | Placas programables: entradas, salidas, coordenadas de la matriz, eventos | 🟩 **Simulador**: explorar la placa usando sus entradas · programar una flecha con `led.plot` · programar un dado al sacudir |
+| 4. Periféricos y corriente | Periféricos E/S, conexiones (USB, HDMI, Bluetooth, pines), voltaje/corriente/resistencia, ley de Ohm | Clasificar periféricos · 🔌 **Simulador**: conectar cada dispositivo en su conector · ⚡ **Laboratorio de corriente** con amperímetro |
+| 5. Encender un LED | Componentes, polaridad del LED, protoboard, LED en un pin de la micro:bit (Tinkercad) | 🔧 **Simulador**: cablear pila, interruptor, resistencia y LED · armar en una **protoboard** · programar el parpadeo del LED en el pin 0 |
 | 6. Entrenar una IA | IA, Machine Learning, etapas (clases, datos, etiquetas, entrenamiento, prueba) y sesgo | Ordenar etapas · Entrenar un clasificador de frutas · Detectar el sesgo |
 | 7. Python: primeros pasos | Lenguaje de programación, `print()`, tipos de datos | Programa con `print` · Clasificar tipos · Predecir la salida |
 | 8. Variables y entrada | Variables, `input()`, `int()`, `float()`, `str()` | Saludo personalizado · Arreglar el `TypeError` · Ticket del carrito de chivitos |
@@ -48,7 +48,7 @@ Son **30 actividades**. La nota del reporte es **(actividades logradas ÷ 30) ×
 
 | Centro | Personaje | Retos |
 |---|---|---|
-| 🤖 ITI | Profe Ohm | Carita en la matriz de LED · Termómetro con el botón B |
+| 🤖 ITI | Profe Ohm | Carita en la matriz de LED · Termómetro con el botón B (simulador) |
 | 💻 Ceibal | Tecla | ¿Es IA o no? · Datos de prueba |
 | 📚 Liceo 29 | Profe Ada | Préstamo de la biblioteca (`if`) · Iniciales (`[0]` y `upper`) |
 | 🔐 INET | Profe Bit | Circuito abierto o cerrado · Ley de Ohm (desafío) |
@@ -88,6 +88,20 @@ El chip **📊 Nota** o el botón **📄 Mi reporte** abren el reporte. Con **�
 
 Todo se guarda **en el navegador del estudiante** (`localStorage`). No hay servidor ni cuentas. Si cambia de computadora o borra los datos del navegador, empieza de cero. Este juego usa claves propias (`gtaape.*`), así que no pisa el progreso del GTA SQL aunque estén publicados en el mismo GitHub.
 
+## Simuladores de placas y circuitos
+
+En las misiones 3, 4 y 5 la práctica se hace **dentro de un simulador**: el estudiante programa, conecta o arma algo y ve el resultado.
+
+| Simulador | Qué hace el estudiante | Cómo se verifica |
+|---|---|---|
+| 🟩 **micro:bit** | Escribe el programa en el Python de MakeCode, lo carga en una placa simulada y la usa con los botones A y B, **sacudir** y un **termómetro** deslizable. Tiene un LED externo en el pin 0 | Se prueba el programa en una placa de prueba: se aprietan botones, se sacude, se cambia la temperatura y se mira la matriz y el pin |
+| 🔌 **Conectores** | Conecta teclado, televisor, auriculares, micro:bit y LED en USB, HDMI, Bluetooth o pines | Cada dispositivo "funciona" al quedar en su conector |
+| ⚡ **Laboratorio de corriente** | Cambia la pila (1,5, 3 o 9 V) y la resistencia, y mira el amperímetro, la fórmula `I = (V − 2) ÷ R` y el brillo del LED | Explorar 4 combinaciones y dejar el LED entre 10 y 20 mA con 9 V |
+| 🔧 **Cableado** | Tiende cables entre la pila, el interruptor, la resistencia y el LED | Un solucionador de circuitos detecta circuito abierto, cortocircuito, LED al revés, LED quemado o LED encendido, y pide que el interruptor lo apague |
+| 🧩 **Protoboard** | Pincha la resistencia y un cable en una protoboard; al pasar por un agujero se iluminan los que están conectados | El mismo solucionador, con las reglas reales de la protoboard (columnas de 5 y rieles) |
+
+El simulador de micro:bit soporta `basic` (`show_icon`, `show_number`, `show_string`, `clear_screen`, `pause`, `forever`), `led` (`plot`, `unplot`, `toggle`, `point`), `input` (`on_button_pressed`, `on_gesture`, `button_is_pressed`, `temperature`, `light_level`), `pins` (`digital_write_pin`, `analog_write_pin`, `digital_read_pin`), `randint` y funciones con `def`, `global` y `return`. Si falta `global` dentro de un evento, aparece el error real de Python (`UnboundLocalError`) con una pista.
+
 ## Python dentro del juego
 
 Las actividades de Python usan un **intérprete propio y liviano** (`src/ape/python-mini.js`): no descarga nada, funciona sin internet y anda bien en las ceibalitas. Cubre lo que se trabaja en 9no:
@@ -96,9 +110,9 @@ Las actividades de Python usan un **intérprete propio y liviano** (`src/ape/pyt
 - operaciones `+ - * / // % **`, comparaciones, `and`, `or`, `not`, `in`;
 - textos: `len`, `upper`, `lower`, `title`, `capitalize`, `strip`, `replace`, `count`, `find`, `split`, `join`, índices `[0]`, recortes `[0:3]`, f-strings con formato (`{x:.2f}`);
 - `round`, `abs`, `max`, `min`, `import math` (`sqrt`, `pi`, `floor`, `ceil`, `pow`), `import random` (`randint`, `choice`);
-- `if / elif / else`, `while`, `for … in range()`, `break`, `continue`.
+- `if / elif / else`, `while`, `for … in range()`, `break`, `continue`, funciones con `def`, `return` y `global`.
 
-Los errores imitan los mensajes reales de Python 3 (`NameError`, `TypeError`, `ValueError`, `SyntaxError`, `IndentationError`…) y cada uno trae una **pista corta en español**. Los bucles infinitos se cortan a los 20.000 pasos. No incluye `def`, diccionarios ni clases.
+Los errores imitan los mensajes reales de Python 3 (`NameError`, `TypeError`, `ValueError`, `SyntaxError`, `IndentationError`…) y cada uno trae una **pista corta en español**. Los bucles infinitos se cortan a los 20.000 pasos. No incluye diccionarios ni clases.
 
 La verificación prueba el programa con **varias entradas distintas** y revisa la lógica, no el texto exacto: mayúsculas, tildes y espacios no hacen fallar la actividad.
 
@@ -132,6 +146,9 @@ node --test tests/*.test.js
 | `src/ape/content.js` | Las 10 misiones: metas, explicaciones, tarjetas, actividades, reflexiones y los retos bonus |
 | `src/ape/ape-console.js` | La pantalla de cada misión, el índice de contenidos, el reporte y los mini retos de la calle |
 | `src/ape/python-mini.js` | El intérprete de Python |
+| `src/ape/microbit-sim.js` | La micro:bit simulada (API de MakeCode, íconos y letras de la matriz) |
+| `src/ape/circuit-sim.js` | El solucionador de circuitos y las reglas de la protoboard |
+| `src/ape/sim-ui.js` | La pantalla de los simuladores |
 | `src/ape/pdf-report.js` | El PDF de portafolio (jsPDF desde cdnjs) |
 | `story/` | La historia en Markdown: misiones, personajes, objetos y mapa. La directiva `- APE: mision-N` abre la misión N |
 

@@ -5,6 +5,11 @@ import { runPython, Interpreter, PyError } from './python-mini.js';
 import { downloadProgressPdf } from './pdf-report.js';
 import { computeBadges, earnedIds } from './badges.js';
 import { STREET_CHALLENGES, getStreetChallenge, normalizeAnswer } from './street-challenges.js';
+import { renderMbsim, renderPorts, renderOhm, renderWires, renderProto } from './sim-ui.js';
+
+/* limpieza de simuladores al cambiar de pantalla */
+let leaveFns = [];
+function runLeave() { const fns = leaveFns; leaveFns = []; fns.forEach((f) => { try { f(); } catch { /* nada */ } }); }
 
 const KEY_PROGRESS = 'gtaape.progress.v1';
 const KEY_STUDENT = 'gtaape.student.v1';
@@ -279,6 +284,7 @@ function renderHeader() {
 }
 
 function renderBody() {
+  runLeave();
   const u = ui;
   u.body.replaceChildren();
   u.body.className = 'apec-body';
@@ -361,12 +367,13 @@ function activityShell(p, idx) {
     computeBadges(progress).filter((b) => b.earned && !before.has(b.id)).forEach((b, i) => setTimeout(() => showToast(`🏅 ¡Nueva insignia: ${b.icon} ${b.name}! Mírala en tu inventario.`), 500 + i * 2900));
   };
   const attempt = () => { progress.attempts[p.id] = (progress.attempts[p.id] || 0) + 1; save(KEY_PROGRESS, progress); return progress.attempts[p.id]; };
-  const layout = p.type === 'python' || p.type === 'predict' ? 'apec-split' : 'apec-stack';
+  const layout = ['python', 'predict'].includes(p.type) ? 'apec-split' : ['mbsim', 'wires', 'proto', 'ohm', 'ports'].includes(p.type) ? 'apec-sim' : 'apec-stack';
   const left = h('section', { class: 'apec-act-left' }, head, prompt, fb, h('div', { class: 'apec-act-actions' }, nextBtn, lessonBtn));
   const wrap = h('div', { class: `apec-activity ${layout}` }, left, work);
   ui.body.append(wrap);
   if (done) success(true);
-  return { work, fb, success, fail, markDone, attempt, done };
+  const onLeave = (fn) => leaveFns.push(fn);
+  return { work, fb, success, fail, markDone, attempt, done, onLeave };
 }
 
 const PRAISES = ['¡Muy bien! Eso es justo lo que había que hacer.', '¡Excelente trabajo!', '¡Bien pensado!', '¡Lo lograste! Sigue así.', '¡Impecable!'];
@@ -380,7 +387,14 @@ function verdict(ctx, ok, failMsg) {
 
 function renderActivity(p, idx) {
   const ctx = activityShell(p, idx);
-  const R = { order: renderOrder, classify: renderClassify, choice: renderChoice, led: renderLed, circuit: renderCircuit, ml: renderMl, predict: renderPredict, python: renderPython };
+  const simHelpers = {
+    verdict, highlight,
+    saveCode: (id, v) => { progress.code[id] = v; save(KEY_PROGRESS, progress); },
+    loadCode: (id) => progress.code[id] ?? null,
+  };
+  const SIMS = { mbsim: renderMbsim, ports: renderPorts, ohm: renderOhm, wires: renderWires, proto: renderProto };
+  if (SIMS[p.type]) { SIMS[p.type](p, ctx, simHelpers); return; }
+  const R = { order: renderOrder, classify: renderClassify, choice: renderChoice, led: renderLed, ml: renderMl, predict: renderPredict, python: renderPython };
   (R[p.type] || renderChoice)(p, ctx);
 }
 
@@ -495,62 +509,6 @@ function renderLed(p, ctx) {
   } }, '✔ Comprobar dibujo');
   const clear = h('button', { type: 'button', class: 'sqlc-btn', onclick: () => { on.clear(); cells.forEach((c) => { c.classList.remove('on'); c.setAttribute('aria-pressed', 'false'); }); } }, 'Borrar todo');
   ctx.work.append(board, h('div', { class: 'apec-row' }, check, clear));
-}
-
-/* ---- circuito con LED ---- */
-function renderCircuit(p, ctx) {
-  const st = ctx.done ? { sw: 1, res: 1, led: 0 } : { sw: 0, res: 0, led: 1 };
-  const opts = {
-    sw: { label: 'Interruptor', values: ['Abierto', 'Cerrado'] },
-    res: { label: 'Entre la pila y el LED', values: ['Un cable directo', 'Una resistencia de 220 Ω'] },
-    led: { label: 'Pata larga del LED (ánodo)', values: ['Hacia el + de la pila', 'Hacia el − de la pila'] },
-  };
-  const svgBox = h('div', { class: 'apec-circuit-svg' });
-  const result = h('p', { class: 'apec-circuit-result', 'aria-live': 'polite' }, 'Arma el circuito y toca ⚡ Probar circuito.');
-  const draw = (state = 'off') => {
-    const lit = state === 'on'; const burnt = state === 'burnt';
-    const closed = st.sw === 1;
-    svgBox.innerHTML = `<svg viewBox="0 0 340 200" role="img" aria-label="Esquema del circuito: pila, interruptor ${closed ? 'cerrado' : 'abierto'}, ${st.res ? 'resistencia' : 'cable directo'} y LED ${st.led === 0 ? 'con la pata larga hacia el positivo' : 'con la pata larga hacia el negativo'}">
-      <g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
-        <path d="M40 150 V40 H120"/>
-        ${closed ? '<path d="M120 40 L170 40"/>' : '<path d="M120 40 L162 18"/>'}
-        <path d="M170 40 H210"/>
-        ${st.res ? '<path d="M210 40 l8 -10 l10 20 l10 -20 l10 20 l10 -20 l8 10"/>' : '<path d="M210 40 H266"/>'}
-        <path d="M266 40 H300 V80"/>
-        <path d="M300 124 V150 H40"/>
-      </g>
-      <circle cx="120" cy="40" r="4" fill="currentColor"/><circle cx="170" cy="40" r="4" fill="currentColor"/>
-      <rect x="22" y="80" width="36" height="58" rx="5" fill="rgba(255,176,0,.18)" stroke="currentColor" stroke-width="2.5"/>
-      <text x="40" y="104" text-anchor="middle" font-size="26" font-weight="900" fill="#ffb000">+</text>
-      <text x="40" y="132" text-anchor="middle" font-size="26" font-weight="900" fill="#ffb000">−</text>
-      <g transform="translate(300 102) ${st.led === 1 ? 'rotate(180)' : ''}">
-        ${lit ? '<circle r="34" fill="rgba(255,64,64,.35)"/>' : ''}
-        <path d="M-14 -16 L14 -16 L0 10 Z" fill="${lit ? '#ff4040' : burnt ? '#333' : 'rgba(255,64,64,.35)'}" stroke="currentColor" stroke-width="2.5"/>
-        <path d="M-14 12 H14" stroke="currentColor" stroke-width="3"/>
-        <text x="${st.led === 1 ? 20 : -20}" y="-20" font-size="11" text-anchor="middle" fill="currentColor" transform="${st.led === 1 ? 'rotate(180)' : ''}">pata larga</text>
-      </g>
-      ${burnt ? '<text x="300" y="70" text-anchor="middle" font-size="22">💥</text>' : ''}
-      <text x="40" y="172" text-anchor="middle" font-size="12" fill="currentColor">Pila 3 V</text>
-      <text x="145" y="64" text-anchor="middle" font-size="12" fill="currentColor">Interruptor</text>
-      <text x="238" y="66" text-anchor="middle" font-size="12" fill="currentColor">${st.res ? '220 Ω' : 'cable'}</text>
-      <text x="300" y="172" text-anchor="middle" font-size="12" fill="currentColor">LED</text>
-    </svg>`;
-  };
-  const controls = h('div', { class: 'apec-circuit-controls' }, Object.entries(opts).map(([k, o]) => h('fieldset', { class: 'apec-fieldset' },
-    h('legend', {}, o.label),
-    h('div', { class: 'apec-cl-opts', role: 'radiogroup' }, o.values.map((v, vi) => h('button', {
-      type: 'button', role: 'radio', 'aria-checked': String(st[k] === vi), class: `apec-pill ${st[k] === vi ? 'on' : ''}`,
-      onclick: (e) => { st[k] = vi; e.currentTarget.parentElement.querySelectorAll('.apec-pill').forEach((x, xi) => { x.classList.toggle('on', xi === vi); x.setAttribute('aria-checked', String(xi === vi)); }); draw(); result.textContent = 'Cambiaste el circuito. Toca ⚡ Probar circuito.'; },
-    }, v))))));
-  const test = h('button', { type: 'button', class: 'sqlc-btn sqlc-btn-primary', onclick: () => {
-    if (st.sw === 0) { draw('off'); result.textContent = '⚫ No pasa nada: el circuito está abierto, la corriente no tiene un camino completo.'; verdict(ctx, false, p.fail); return; }
-    if (st.led === 1) { draw('off'); result.textContent = '⚫ El LED no prende: está conectado al revés (el ánodo tiene que ir hacia el +).'; verdict(ctx, false, p.fail); return; }
-    if (st.res === 0) { draw('burnt'); result.textContent = '💥 ¡El LED se quemó! Sin nada que frene la corriente, pasa demasiada.'; verdict(ctx, false, p.fail); return; }
-    draw('on'); result.textContent = '🔴 ¡El LED prende! Circuito cerrado, con resistencia y bien polarizado.';
-    verdict(ctx, true, '');
-  } }, '⚡ Probar circuito');
-  draw(ctx.done ? 'on' : 'off');
-  ctx.work.append(h('div', { class: 'apec-circuit' }, svgBox, controls), result, h('div', { class: 'apec-row' }, test));
 }
 
 /* ---- entrenar un modelo de ML ---- */
@@ -842,6 +800,7 @@ async function close(solved) {
       if (!leave || session !== s) return;
     }
   }
+  runLeave();
   ui.root.hidden = true;
   document.documentElement.classList.remove('sqlc-open');
   session = null;
@@ -900,7 +859,7 @@ function openIndex() {
   if (ui && !ui.root.hidden && session?.onSolved) { showToast('Termina o sal de la misión actual para ver los contenidos.'); return; }
   if (indexEl) closeIndex();
   closeReport();
-  if (ui && !ui.root.hidden) { ui.root.hidden = true; document.documentElement.classList.remove('sqlc-open'); session = null; unlockGame(); }
+  if (ui && !ui.root.hidden) { runLeave(); ui.root.hidden = true; document.documentElement.classList.remove('sqlc-open'); session = null; unlockGame(); }
   const { grade, done, total } = getGrade();
   const cards = MISSIONS.map((m) => {
     const st = missionState(m.n);

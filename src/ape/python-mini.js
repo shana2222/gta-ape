@@ -40,6 +40,9 @@ function hintFor(type, msg) {
   }
   if (type === 'IndentationError') return 'Lo que va adentro de un if/else lleva sangría (4 espacios o Tab). Lo de afuera, no.';
   if (type === 'ZeroDivisionError') return 'No se puede dividir entre cero.';
+  if (type === 'UnboundLocalError') return 'Dentro de una función (def), para cambiar una variable de afuera escribe "global nombre" en la primera línea de la función.';
+  if (type === 'RecursionError') return 'La función se llama a sí misma sin parar.';
+  if (type === 'AttributeError' && /^module '/.test(msg)) return 'Esa función no existe en ese módulo. Revisa cómo se escribe (por ejemplo basic.show_number) en la tabla de la explicación.';
   if (type === 'AttributeError') return 'Ese tipo de dato no tiene esa función. Las funciones de texto (upper, lower…) solo sirven con str.';
   if (type === 'IndexError') return 'Esa posición no existe. Recuerda que se empieza a contar desde 0.';
   if (type === 'TimeoutError') return 'El programa repite para siempre. Revisa que la condición del while en algún momento sea falsa.';
@@ -54,6 +57,35 @@ class PyModule { constructor(name, attrs) { this.name = name; this.attrs = attrs
 class PyType { constructor(name, fn) { this.name = name; this.fn = fn; } }
 class PyBound { constructor(self, name, fn) { this.self = self; this.name = name; this.fn = fn; } }
 class PyRange { constructor(a, b, s) { this.a = a; this.b = b; this.s = s; } }
+export class PyUserFunc { constructor(name, params, body) { this.name = name; this.params = params; this.body = body; this.scope = null; } }
+class ReturnSig { constructor(v) { this.v = v; } }
+
+/** Nombres que una función asigna (son locales salvo que se declaren global), como hace Python. */
+function scanAssigned(body) {
+  const assigned = new Set();
+  const globals = new Set();
+  const walk = (stmts) => {
+    for (const st of stmts) {
+      if (st.k === 'assign' && st.target.k === 'name') assigned.add(st.target.id);
+      else if (st.k === 'multi') st.targets.forEach((t) => { if (t.k === 'name') assigned.add(t.id); });
+      else if (st.k === 'for') { assigned.add(st.name); walk(st.body); }
+      else if (st.k === 'if') { walk(st.body); walk(st.orelse); }
+      else if (st.k === 'while') walk(st.body);
+      else if (st.k === 'global') st.names.forEach((n) => globals.add(n));
+      else if (st.k === 'def') assigned.add(st.name);
+    }
+  };
+  walk(body);
+  for (const g of globals) assigned.delete(g);
+  return { assigned, globals };
+}
+/** Ayudas para que otros módulos (p. ej. el simulador de micro:bit) agreguen funciones y "módulos" de Python. */
+export const pyApi = {
+  func: (name, fn) => new PyFunc(name, fn),
+  ns: (name, attrs) => new PyModule(name, attrs),
+  float: (v) => new PyFloat(v),
+  num: (x) => (x instanceof PyFloat ? x.v : typeof x === 'boolean' ? (x ? 1 : 0) : x),
+};
 
 const isInt = (x) => typeof x === 'number';
 const isFloat = (x) => x instanceof PyFloat;
@@ -71,6 +103,7 @@ export function typeName(x) {
   if (x instanceof PyRange) return 'range';
   if (x instanceof PyType) return 'type';
   if (x instanceof PyFunc || x instanceof PyBound) return 'builtin_function_or_method';
+  if (x instanceof PyUserFunc) return 'function';
   if (x instanceof PyModule) return 'module';
   return 'object';
 }
@@ -107,6 +140,7 @@ export function pyRepr(x) {
   if (x instanceof PyRange) return `range(${x.a}, ${x.b}${x.s !== 1 ? `, ${x.s}` : ''})`;
   if (x instanceof PyType) return `<class '${x.name}'>`;
   if (x instanceof PyFunc) return `<built-in function ${x.name}>`;
+  if (x instanceof PyUserFunc) return `<function ${x.name}>`;
   if (x instanceof PyBound) return `<built-in method ${x.name}>`;
   if (x instanceof PyModule) return `<module '${x.name}'>`;
   return pyStr(x);
@@ -300,7 +334,22 @@ class Parser {
         return [{ k: 'for', name: nameTok.v, iter, body: this.block('for', t.line), line: t.line }];
       }
       if (t.v === 'elif' || t.v === 'else') throw new PyError('SyntaxError', 'invalid syntax (¿falta el if antes, o la sangría está mal?)', t.line);
-      if (t.v === 'def') throw new PyError('SyntaxError', 'def (crear funciones) no está disponible en este juego', t.line);
+      if (t.v === 'def') {
+        this.next();
+        const nameTok = this.next();
+        if (nameTok.t !== 'NAME') throw new PyError('SyntaxError', 'invalid syntax', nameTok.line);
+        this.expectOp('(', "expected '('");
+        const params = [];
+        while (!this.isOp(')')) {
+          const pt = this.next();
+          if (pt.t !== 'NAME') throw new PyError('SyntaxError', 'invalid syntax', pt.line);
+          params.push(pt.v);
+          if (this.isOp(',')) this.next(); else break;
+        }
+        this.expectOp(')', "expected ')'");
+        this.expectOp(':', "expected ':'");
+        return [{ k: 'def', name: nameTok.v, params, body: this.block('function definition', t.line), line: t.line }];
+      }
     }
     return this.simpleStatements();
   }
@@ -338,6 +387,12 @@ class Parser {
     const t = this.peek();
     if (t.t === 'KW') {
       if (t.v === 'pass') { this.next(); return { k: 'pass', line: t.line }; }
+      if (t.v === 'return') {
+        this.next();
+        const nt = this.peek();
+        const e = nt.t === 'NEWLINE' || nt.t === 'EOF' || nt.t === 'DEDENT' || (nt.t === 'OP' && nt.v === ';') ? null : this.expr();
+        return { k: 'return', e, line: t.line };
+      }
       if (t.v === 'break') { this.next(); return { k: 'break', line: t.line }; }
       if (t.v === 'continue') { this.next(); return { k: 'continue', line: t.line }; }
       if (t.v === 'import') {
@@ -362,6 +417,12 @@ class Parser {
         }
         return { k: 'from', mod, names, line: t.line };
       }
+    }
+    if (t.t === 'NAME' && t.v === 'global' && this.peek(1).t === 'NAME') {
+      this.next();
+      const names = [this.next().v];
+      while (this.isOp(',')) { this.next(); names.push(this.next().v); }
+      return { k: 'global', names, line: t.line };
     }
     const target = this.expr();
     const op = this.peek();
@@ -846,7 +907,7 @@ const LIST_METHODS = {
 };
 
 export class Interpreter {
-  constructor({ input, write, maxSteps = 20000, maxOutput = 12000, rng = Math.random } = {}) {
+  constructor({ input, write, maxSteps = 20000, maxOutput = 12000, rng = Math.random, globals = null } = {}) {
     let written = 0;
     const rawWrite = write || (() => {});
     this.io = {
@@ -862,9 +923,63 @@ export class Interpreter {
     this.builtins = makeBuiltins(this.io);
     this.modules = makeModules(rng);
     this.vars = Object.create(null);
+    if (globals) Object.assign(this.builtins, globals);
+    this.frame = null; // { locals, globals: Set } dentro de una función
+    this.depth = 0;
+  }
+
+  /** Copia que comparte variables globales y funciones, con su propio contador de pasos (un "hilo" de eventos). */
+  fork({ maxSteps } = {}) {
+    const f = Object.create(Interpreter.prototype);
+    Object.assign(f, this);
+    f.frame = null;
+    f.depth = 0;
+    f.steps = 0;
+    if (maxSteps) f.maxSteps = maxSteps;
+    return f;
+  }
+
+  setVar(name, v) {
+    if (this.frame && !this.frame.globals.has(name)) this.frame.locals[name] = v;
+    else this.vars[name] = v;
+  }
+
+  /** Llama una función de Python (del estudiante o incorporada) desde JavaScript. */
+  async callFunction(f, args = []) {
+    if (f instanceof PyUserFunc) return this.callUser(f, args);
+    if (f instanceof PyFunc) return f.fn(args, {});
+    throw new PyError('TypeError', `'${typeName(f)}' object is not callable`);
+  }
+
+  async callUser(f, args, line) {
+    if (args.length !== f.params.length) {
+      throw new PyError('TypeError', `${f.name}() takes ${f.params.length} positional argument${f.params.length === 1 ? '' : 's'} but ${args.length} ${args.length === 1 ? 'was' : 'were'} given`, line);
+    }
+    if (this.depth > 60) throw new PyError('RecursionError', 'maximum recursion depth exceeded', line);
+    const saved = this.frame;
+    const locals = Object.create(null);
+    f.params.forEach((pn, i) => { locals[pn] = args[i]; });
+    if (!f.scope) f.scope = scanAssigned(f.body);
+    this.frame = { locals, globals: new Set(f.scope.globals), assigned: f.scope.assigned };
+    this.depth += 1;
+    try {
+      await this.execBlock(f.body);
+      return null;
+    } catch (e) {
+      if (e instanceof ReturnSig) return e.v;
+      if (e instanceof BreakSig || e instanceof ContinueSig) throw new PyError('SyntaxError', "'break' outside loop", line);
+      throw e;
+    } finally {
+      this.frame = saved;
+      this.depth -= 1;
+    }
   }
 
   lookup(name, line) {
+    if (this.frame && !this.frame.globals.has(name) && name in this.frame.locals) return this.frame.locals[name];
+    if (this.frame && !this.frame.globals.has(name) && this.frame.assigned?.has(name)) {
+      throw new PyError('UnboundLocalError', `cannot access local variable '${name}' where it is not associated with a value`, line);
+    }
     if (name in this.vars) return this.vars[name];
     if (name in this.builtins) return this.builtins[name];
     const e = new PyError('NameError', `name '${name}' is not defined`, line);
@@ -889,6 +1004,13 @@ export class Interpreter {
       switch (s.k) {
         case 'expr': await this.eval(s.e); return;
         case 'pass': return;
+        case 'def': this.setVar(s.name, new PyUserFunc(s.name, s.params, s.body)); return;
+        case 'return': throw new ReturnSig(s.e ? await this.eval(s.e) : null);
+        case 'global': {
+          if (!this.frame) return;
+          for (const n of s.names) this.frame.globals.add(n);
+          return;
+        }
         case 'break': throw new BreakSig();
         case 'continue': throw new ContinueSig();
         case 'assign': {
@@ -925,7 +1047,7 @@ export class Interpreter {
           const items = iterate(await this.eval(s.iter));
           for (const it of items) {
             this.tick(s.line);
-            this.vars[s.name] = it;
+            this.setVar(s.name, it);
             try { await this.execBlock(s.body); } catch (e) {
               if (e instanceof BreakSig) break;
               if (e instanceof ContinueSig) continue;
@@ -962,7 +1084,7 @@ export class Interpreter {
   }
 
   async assign(target, v) {
-    if (target.k === 'name') { this.vars[target.id] = v; return; }
+    if (target.k === 'name') { this.setVar(target.id, v); return; }
     if (target.k === 'index') {
       const obj = await this.eval(target.obj);
       const i = await this.eval(target.idx);
@@ -1053,6 +1175,7 @@ export class Interpreter {
             return await f.fn(args, kw);
           }
           if (f instanceof PyBound) return f.fn(f.self, args, kw);
+          if (f instanceof PyUserFunc) return await this.callUser(f, args, e.line);
         } catch (x) {
           if (x instanceof PyError && !x.line) x.line = e.line;
           throw x;
@@ -1085,6 +1208,7 @@ export async function runPython(code, { inputs = [], maxSteps = 20000, seed = nu
   try { await it.run(code); } catch (e) {
     if (e instanceof PyError) error = e;
     else if (e instanceof BreakSig || e instanceof ContinueSig) error = new PyError('SyntaxError', "'break' outside loop");
+    else if (e instanceof ReturnSig) error = new PyError('SyntaxError', "'return' outside function");
     else error = new PyError('RuntimeError', String(e?.message || e));
   }
   return { out, error, vars: it.vars, inputsUsed: used, transcript };

@@ -225,7 +225,7 @@ avanzar 1</pre>
     goals: [
       'Reconozco las partes de la micro:bit y si son entrada o salida.',
       'Ubico un LED de la matriz con sus coordenadas (x, y).',
-      'Leo un programa de la micro:bit y predigo qué hace.',
+      'Programo eventos de la micro:bit (botones, sacudir) y pruebo el resultado.',
     ],
     lesson: [
       { title: '¿Qué es una placa programable?', html: `<p>Es una <b>pequeña computadora</b> en una placa: tiene un procesador, memoria, entradas y salidas. Le cargamos un programa y lo ejecuta.</p>
@@ -244,6 +244,20 @@ avanzar 1</pre>
     basic.show_icon(IconNames.HEART)
 input.on_button_pressed(Button.A, al_presionar_a)</pre>
         <p>Este programa muestra un ❤️ cada vez que aprietas <b>A</b>. El botón es la <b>entrada</b> y la matriz es la <b>salida</b>.</p>` },
+      { title: 'Programar en el simulador', html: `<p>En las actividades vas a programar una micro:bit <b>simulada</b> con el Python de MakeCode. Estas son las instrucciones que más vas a usar:</p>
+        <table class="apec-table"><tbody>
+          <tr><th><code>basic.show_icon(IconNames.HEART)</code></th><td>Muestra un ícono (HEART, HAPPY, SAD, YES, NO…)</td></tr>
+          <tr><th><code>basic.show_number(7)</code></th><td>Muestra un número</td></tr>
+          <tr><th><code>basic.show_string("HOLA")</code></th><td>Muestra un texto</td></tr>
+          <tr><th><code>led.plot(x, y)</code></th><td>Prende un LED</td></tr>
+          <tr><th><code>randint(1, 6)</code></th><td>Número al azar entre 1 y 6</td></tr>
+          <tr><th><code>input.temperature()</code></th><td>Lee el sensor de temperatura</td></tr>
+          <tr><th><code>basic.pause(500)</code></th><td>Espera medio segundo (500 ms)</td></tr>
+        </tbody></table>
+        <p>Para los eventos se escribe primero la función con <code>def</code> y después se "engancha" al evento:</p>
+        <pre class="apec-code">def al_sacudir():
+    basic.show_icon(IconNames.SURPRISED)
+input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>` },
     ],
     cards: [
       { front: 'Matriz de LED', back: '25 luces (5×5) que funcionan como pantalla de salida.' },
@@ -253,42 +267,55 @@ input.on_button_pressed(Button.A, al_presionar_a)</pre>
     ],
     phases: [
       {
-        id: 'm3-a', title: 'Entradas y salidas de la placa', type: 'classify',
-        prompt: '<p>Clasifica cada parte de la micro:bit.</p>',
-        categories: ['Entrada', 'Salida'],
-        items: [
-          { text: 'Botón A', cat: 0 }, { text: 'Matriz de 25 LED', cat: 1 }, { text: 'Sensor de temperatura', cat: 0 },
-          { text: 'Acelerómetro', cat: 0 }, { text: 'Parlante', cat: 1 }, { text: 'Sensor de luz', cat: 0 },
+        id: 'm3-a', title: 'Explora la placa', type: 'mbsim', mode: 'explore', sensors: ['temperature'],
+        prompt: `<p>La micro:bit de la ciudad ya tiene un programa cargado. <b>Usa sus entradas</b> (botones, sacudir, temperatura) y descubre las <b>4 salidas</b> que tiene programadas.</p>
+          <p class="apec-tip">💡 Lee el programa de la derecha: cada <code>def</code> es lo que pasa cuando ocurre un evento.</p>`,
+        code: 'def al_presionar_a():\n    basic.show_icon(IconNames.HEART)\ninput.on_button_pressed(Button.A, al_presionar_a)\n\ndef al_presionar_b():\n    basic.show_number(input.temperature())\ninput.on_button_pressed(Button.B, al_presionar_b)\n\ndef al_sacudir():\n    basic.show_icon(IconNames.SURPRISED)\ninput.on_gesture(Gesture.SHAKE, al_sacudir)\n\ndef para_siempre():\n    if input.temperature() > 30:\n        basic.show_string("CALOR")\nbasic.forever(para_siempre)\n',
+        goals: [
+          { text: 'Aparece un corazón ❤️', input: 'Botón A', output: 'Matriz: ícono', done: (s) => s.shown.some((x) => x.value === 'HEART') },
+          { text: 'Aparece la temperatura', input: 'Botón B + sensor de temperatura', output: 'Matriz: número', done: (s) => s.shown.some((x) => x.kind === 'number') },
+          { text: 'Aparece una cara de sorpresa 😮', input: 'Acelerómetro (sacudir)', output: 'Matriz: ícono', done: (s) => s.shown.some((x) => x.value === 'SURPRISED') },
+          { text: 'La placa dice CALOR', input: 'Sensor de temperatura (más de 30 °C)', output: 'Matriz: texto', done: (s) => s.shown.some((x) => x.kind === 'string' && x.value === 'CALOR') },
         ],
-        fail: 'Pregúntate: ¿esta parte RECIBE información del mundo (entrada) o MUESTRA algo al mundo (salida)?',
+        fail: 'Te faltan salidas por descubrir. Mira en el programa qué evento dispara cada una.',
       },
       {
-        id: 'm3-b', title: 'Dibujar con coordenadas', type: 'led',
-        prompt: `<p>Ohm necesita una <b>flecha</b> para la señal del puerto. Prende los LED que indica el programa (tócalos en la matriz):</p>
-          <pre class="apec-code">led.plot(2, 0)
-led.plot(1, 1)
-led.plot(2, 1)
-led.plot(3, 1)
-led.plot(2, 2)
-led.plot(2, 3)
-led.plot(2, 4)</pre>`,
-        target: [[2, 0], [1, 1], [2, 1], [3, 1], [2, 2], [2, 3], [2, 4]],
-        fail: 'Recuerda: el primer número es la columna (x, de izquierda a derecha) y el segundo es la fila (y, de arriba hacia abajo).',
+        id: 'm3-b', title: 'Dibujar con coordenadas', type: 'mbsim', mode: 'code',
+        prompt: `<p>Ohm necesita una <b>flecha hacia arriba</b> para señalizar el puerto. Programa la placa para que, <b>al iniciar</b>, dibuje exactamente la figura del objetivo usando <code>led.plot(x, y)</code>.</p>
+          <p class="apec-tip">Recuerda: <b>x</b> es la columna (0 a 4, de izquierda a derecha) e <b>y</b> es la fila (0 a 4, de arriba hacia abajo). Ya te dejamos la punta de la flecha.</p>`,
+        target: '..#../.###./#.#.#/..#../..#..',
+        starter: '# Al iniciar: dibuja la flecha con led.plot(x, y)\nled.plot(2, 0)\n',
+        check: async (sim) => {
+          const want = '..#../.###./#.#.#/..#../..#..';
+          const got = sim.matrixString();
+          if (got === want) return true;
+          const W = want.replace(/\//g, ''); const G = got.replace(/\//g, '');
+          const missing = [...W].filter((c, i) => c === '#' && G[i] !== '#').length;
+          const extra = [...W].filter((c, i) => c !== '#' && G[i] === '#').length;
+          return `${missing ? `faltan ${missing} LED` : ''}${missing && extra ? ' y ' : ''}${extra ? `hay ${extra} LED de más` : ''}. Compara tu placa con el objetivo, LED por LED.`;
+        },
+        require: [{ re: /led\.plot\s*\(/, msg: 'Usa led.plot(x, y) para prender cada LED.' }],
       },
       {
-        id: 'm3-c', title: 'Leer un programa', type: 'choice',
-        prompt: `<p>Lee este programa de la micro:bit:</p>
-          <pre class="apec-code">def al_sacudir():
-    basic.show_number(randint(1, 6))
-input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>
-          <p>¿Qué hace?</p>`,
-        options: [
-          'Cuando sacudes la placa, muestra un número al azar del 1 al 6 (un dado).',
-          'Muestra los números del 1 al 6 cuando aprietas el botón A.',
-          'Muestra siempre el número 6 apenas se prende.',
-          'Hace sonar 6 pitidos cuando la sacudes.',
-        ], answer: 0,
-        fail: 'Fíjate en el evento (Gesture.SHAKE = sacudir) y en la salida (show_number con randint = número al azar).',
+        id: 'm3-c', title: 'Programar un dado', type: 'mbsim', mode: 'code',
+        prompt: `<p>En la feria quieren un <b>dado electrónico</b>: cuando alguien <b>sacude</b> la placa, tiene que mostrar un número al azar <b>del 1 al 6</b>.</p>
+          <p>Completa los espacios <code>___</code>, toca <b>▶ Cargar en la placa</b> y prueba con el botón <b>🤚 Sacudir</b>.</p>`,
+        starter: 'def al_sacudir():\n    basic.show_number(randint(___, ___))\ninput.on_gesture(Gesture.___, al_sacudir)\n',
+        check: async (sim) => {
+          const nums = new Set();
+          for (let i = 0; i < 40; i++) {
+            await sim.trigger('SHAKE');
+            if (sim.error) return 'la placa dio un error al sacudirla.';
+            const last = sim.lastShown('number');
+            if (!last) return 'al sacudir la placa no aparece ningún número. ¿Usaste Gesture.SHAKE y basic.show_number?';
+            nums.add(Number(last.value));
+          }
+          const list = [...nums];
+          if (list.some((n) => n < 1 || n > 6)) return `apareció el número ${list.find((n) => n < 1 || n > 6)}, y un dado va del 1 al 6.`;
+          if (list.length < 5) return 'siempre sale el mismo número (o casi). Usa randint para que sea al azar.';
+          return true;
+        },
+        require: [{ re: /on_gesture\s*\(\s*Gesture\.SHAKE/, msg: 'El dado tiene que reaccionar al gesto de sacudir: Gesture.SHAKE.' }],
       },
     ],
     reflection: 'Inventa un proyecto útil para tu liceo con la micro:bit. ¿Qué entrada usarías y qué salida?',
@@ -322,6 +349,10 @@ input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>
           <tr><th>🌊 Corriente (I)</th><td>La <b>cantidad</b> de electricidad que circula (cuánta agua pasa). Se mide en <b>amperios</b>.</td></tr>
           <tr><th>🚧 Resistencia (R)</th><td>Lo que <b>frena</b> la corriente (una manguera finita). Se mide en <b>ohmios (Ω)</b>.</td></tr>
         </tbody></table>` },
+      { title: '¿Cuánta corriente pasa?', html: `<p>La <b>ley de Ohm</b> relaciona las tres: <b>I = V ÷ R</b>. Con más resistencia, pasa <b>menos</b> corriente; con más voltaje, pasa <b>más</b>.</p>
+        <p>Un LED rojo "usa" unos <b>2 V</b>, así que en un circuito con LED la cuenta es:</p>
+        <div class="apec-ex"><b>I = (V de la pila − 2 V) ÷ R</b><br>Con una pila de 9 V y una resistencia de 470 Ω: (9 − 2) ÷ 470 = 0,015 A = <b>15 mA</b> ✔</div>
+        <p class="apec-tip">💡 Un LED común funciona bien entre <b>10 y 20 mA</b> (miliamperios). Con más de 20 mA se calienta, y si pasa mucha más, se quema.</p>` },
       { title: 'Circuito cerrado', html: `<p>La corriente solo circula si hay un <b>camino completo</b>: sale del polo <b>+</b> de la pila, pasa por los componentes y vuelve al polo <b>−</b>.</p>
         <ul><li><b>Circuito cerrado</b>: el camino está completo → funciona.</li><li><b>Circuito abierto</b>: hay un corte (cable suelto, interruptor apagado) → no funciona.</li><li><b>Cortocircuito</b>: la corriente vuelve sin pasar por nada que la frene → ¡peligro, se calienta!</li></ul>` },
     ],
@@ -343,23 +374,27 @@ input.on_gesture(Gesture.SHAKE, al_sacudir)</pre>
         fail: 'Si solo manda datos a la computadora es entrada; si solo los muestra es salida; si hace las dos cosas, entrada/salida.',
       },
       {
-        id: 'm4-b', title: 'La conexión correcta', type: 'classify',
-        prompt: '<p>¿Qué conexión usarías en cada caso?</p>',
-        categories: ['USB', 'HDMI', 'Bluetooth', 'Pines'],
-        items: [
-          { text: 'Pasar el programa de la ceibalita a la micro:bit con un cable.', cat: 0 },
-          { text: 'Ver la ceibalita en el televisor del salón.', cat: 1 },
-          { text: 'Escuchar música en auriculares sin cable.', cat: 2 },
-          { text: 'Conectar un LED externo a la micro:bit.', cat: 3 },
+        id: 'm4-b', title: 'Conectar cada cosa en su lugar', type: 'ports',
+        prompt: `<p>Tito quiere armar un puesto de trabajo con una ceibalita. <b>Toca un dispositivo y después el conector</b> donde va. Cuando quede bien conectado, vas a ver que funciona.</p>`,
+        devices: [
+          { id: 'teclado', icon: '⌨️', name: 'Teclado', port: 'usb', io: 'Entrada', works: 'Escribe: hola Santa Bruma_' },
+          { id: 'monitor', icon: '🖥️', name: 'Televisor del salón', port: 'hdmi', io: 'Salida', works: 'Muestra la pantalla de la ceibalita' },
+          { id: 'auris', icon: '🎧', name: 'Auriculares inalámbricos', port: 'bt', io: 'Salida', works: '♪ Suena la radio' },
+          { id: 'microbit', icon: '🟩', name: 'micro:bit (cable)', port: 'usb', io: 'Entrada/Salida', works: 'Recibe el programa' },
+          { id: 'led', icon: '💡', name: 'LED externo', port: 'pin', io: 'Salida', works: 'Se prende con el programa' },
         ],
-        fail: 'Piensa: imagen al TV = HDMI; sin cable = Bluetooth; cable de datos a la placa = USB; componentes en la placa = pines.',
+        ports: [
+          { id: 'usb1', type: 'usb', label: 'USB 1', where: 'pc' }, { id: 'usb2', type: 'usb', label: 'USB 2', where: 'pc' },
+          { id: 'hdmi', type: 'hdmi', label: 'HDMI', where: 'pc' }, { id: 'bt', type: 'bt', label: 'Bluetooth', where: 'pc' },
+          { id: 'p0', type: 'pin', label: 'Pin 0 + GND', where: 'mb' },
+        ],
+        fail: 'Ese dispositivo no va ahí. Piensa: ¿necesita cable de datos (USB), imagen (HDMI), conexión sin cable (Bluetooth) o un pin de la placa?',
       },
       {
-        id: 'm4-c', title: 'Voltaje, corriente y resistencia', type: 'choice',
-        prompt: '<p>En la analogía del agua, una manguera <b>más finita</b> deja pasar menos agua. ¿Qué representa en un circuito?</p>',
-        options: ['Una resistencia mayor, que frena más la corriente.', 'Un voltaje mayor, que empuja más.', 'Una corriente mayor.', 'Un circuito abierto.'],
-        answer: 0,
-        fail: 'Lo que FRENA el paso del agua en la manguera es lo que frena la corriente en el circuito.',
+        id: 'm4-c', title: 'Laboratorio de corriente', type: 'ohm',
+        prompt: `<p>Bit armó un circuito con una <b>pila</b>, una <b>resistencia</b> y un <b>LED</b>. Cambia la pila y la resistencia y mira el <b>amperímetro</b>.</p>
+          <ol><li>Explora: prueba al menos <b>4 combinaciones</b> distintas.</li><li>Reto: con la pila de <b>9 V</b>, logra que el LED funcione <b>seguro</b>: entre <b>10 y 20 mA</b>.</li></ol>`,
+        fail: 'Con 9 V la corriente todavía no está entre 10 y 20 mA. Si es mucha, sube la resistencia; si es poca, bájala.',
       },
     ],
     reflection: '¿Qué periféricos usas todos los días? Elige dos y explica si son de entrada, de salida o de entrada/salida.',
@@ -402,30 +437,37 @@ pins.digital_write_pin(DigitalPin.P0, 0)   # 0 = apagar</pre>
     ],
     phases: [
       {
-        id: 'm5-a', title: 'Armar el circuito', type: 'circuit',
-        prompt: '<p>El farol de la plaza no prende. Elige cómo armar el circuito para que el <b>LED prenda sin quemarse</b>.</p>',
-        fail: 'Revisa las tres cosas: ¿el circuito está cerrado? ¿hay algo que frene la corriente? ¿la pata larga va hacia el +?',
+        id: 'm5-a', title: 'Cablear el farol', type: 'wires',
+        prompt: `<p>El farol de la plaza no prende. <b>Conecta los cables</b> para que el LED prenda sin quemarse y se pueda <b>apagar con el interruptor</b>.</p>
+          <p class="apec-tip">Toca un punto y después otro para tender un cable. Toca un cable para sacarlo. Después prueba el circuito con el interruptor cerrado y abierto.</p>`,
+        fail: 'Revisa: ¿hay un camino completo del + al −? ¿pasa por la resistencia y por el interruptor? ¿la pata larga del LED mira hacia el +?',
       },
       {
-        id: 'm5-b', title: 'La protoboard', type: 'choice',
-        prompt: `<p>En la protoboard pusiste la pata larga del LED en el agujero <b>E10</b>.</p>
-          <div class="apec-proto" aria-hidden="true">columna 10: <b>A10 B10 C10 D10 E10</b> │ canaleta │ F10 G10 H10 I10 J10</div>
-          <p>¿En qué agujero tienes que poner la resistencia para que quede conectada a esa pata?</p>`,
-        options: ['A10 (misma columna, mismo lado de la canaleta)', 'F10 (del otro lado de la canaleta)', 'E11 (la columna de al lado)', 'En cualquier agujero de la placa'],
-        answer: 0,
-        fail: 'Solo están conectados los 5 agujeros de la misma columna y del mismo lado de la canaleta (A a E, o F a J).',
+        id: 'm5-b', title: 'Armar en la protoboard', type: 'proto',
+        prompt: `<p>Ahora el circuito de verdad, como en Tinkercad. La pila ya está conectada a los rieles (<b>+</b> rojo y <b>−</b> azul) y el LED ya está pinchado: pata larga en <b>e5</b>, pata corta en <b>e7</b>.</p>
+          <p>Coloca la <b>resistencia</b> y el <b>cable negro</b> (cada uno tiene 2 patas) para cerrar el circuito.</p>
+          <p class="apec-tip">Pasa el mouse (o toca) un agujero: se iluminan todos los que están conectados con él.</p>`,
+        led: { a: 'e5', k: 'e7' },
+        fail: 'Recuerda: en la protoboard solo están conectados los 5 agujeros de la misma columna y del mismo lado de la canaleta, y todo el riel.',
       },
       {
-        id: 'm5-c', title: 'Prender el LED del pin 0', type: 'choice',
-        prompt: `<p>Conectaste el LED al <b>pin 0</b> y a <b>GND</b>. ¿Qué programa lo hace <b>parpadear</b> (prender y apagar cada medio segundo)?</p>`,
-        options: [
-          'para siempre:\n  pins.digital_write_pin(DigitalPin.P0, 1)\n  basic.pause(500)\n  pins.digital_write_pin(DigitalPin.P0, 0)\n  basic.pause(500)',
-          'al iniciar:\n  pins.digital_write_pin(DigitalPin.P0, 1)',
-          'para siempre:\n  pins.digital_write_pin(DigitalPin.P1, 1)\n  basic.pause(500)',
-          'para siempre:\n  pins.digital_write_pin(DigitalPin.P0, 0)\n  basic.pause(500)',
-        ],
-        code: true, answer: 0,
-        fail: 'Para parpadear hay que prender (1), esperar, apagar (0) y esperar… y repetirlo para siempre. Y tiene que ser el pin P0.',
+        id: 'm5-c', title: 'Hacer parpadear el LED', type: 'mbsim', mode: 'code', pins: true,
+        prompt: `<p>Conectaste un LED al <b>pin 0</b> y a <b>GND</b> de la micro:bit. Completa el programa para que el LED <b>parpadee</b>: prendido medio segundo, apagado medio segundo, <b>para siempre</b>.</p>
+          <p class="apec-tip"><code>pins.digital_write_pin(DigitalPin.P0, 1)</code> prende y con <code>0</code> apaga. <code>basic.pause(500)</code> espera medio segundo.</p>`,
+        starter: 'def para_siempre():\n    pins.digital_write_pin(DigitalPin.P0, 1)\n    basic.pause(500)\n    # completa: apaga el LED y espera\n\nbasic.forever(para_siempre)\n',
+        check: async (sim) => {
+          await sim.advance(4000);
+          if (sim.error) return 'la placa dio un error.';
+          const p0 = sim.pinLog.filter((x) => x.pin === 'P0');
+          if (!p0.length) return 'el pin 0 nunca cambia. Usa pins.digital_write_pin(DigitalPin.P0, …).';
+          let changes = 0; let prev = null; let lastT = null; let minGap = Infinity;
+          for (const x of p0) { if (prev !== null && x.v !== prev) { changes += 1; if (lastT !== null) minGap = Math.min(minGap, x.t - lastT); lastT = x.t; } if (prev === null) lastT = x.t; prev = x.v; }
+          if (!p0.some((x) => x.v === 0)) return 'el LED se prende pero nunca se apaga. Falta escribir 0 en el pin.';
+          if (changes < 4) return 'el LED no parpadea varias veces. ¿Está dentro de basic.forever?';
+          if (minGap < 150) return 'el LED se apaga y se prende tan rápido que no se ve. Falta una pausa después de apagarlo.';
+          return true;
+        },
+        require: [{ re: /basic\.forever\s*\(/, msg: 'Para que se repita, el programa tiene que estar en basic.forever.' }],
       },
     ],
     reflection: 'Si el LED de tu circuito no prende, ¿qué revisarías primero y por qué? Usa las palabras ánodo, cátodo o resistencia.',
@@ -860,15 +902,19 @@ export const BONUS = [
     fail: 'x es la columna (izquierda → derecha) e y es la fila (arriba → abajo), las dos empiezan en 0.',
   },
   {
-    id: 'b-iti-2', center: 'iti', title: 'Termómetro del taller', type: 'choice',
-    prompt: '<p>¿Qué programa muestra la temperatura del taller <b>cada vez que se aprieta el botón B</b>?</p>',
-    options: [
-      'def al_presionar_b():\n    basic.show_number(input.temperature())\ninput.on_button_pressed(Button.B, al_presionar_b)',
-      'def al_presionar_b():\n    basic.show_number(input.light_level())\ninput.on_button_pressed(Button.B, al_presionar_b)',
-      'def al_presionar_a():\n    basic.show_number(input.temperature())\ninput.on_button_pressed(Button.A, al_presionar_a)',
-      'basic.show_number(input.temperature())',
-    ], code: true, answer: 0,
-    fail: 'Necesitas el evento del botón B y el sensor de temperatura (temperature).',
+    id: 'b-iti-2', center: 'iti', title: 'Termómetro del taller', type: 'mbsim', mode: 'code', sensors: ['temperature'],
+    prompt: '<p>Programa la placa para que muestre la <b>temperatura</b> del taller <b>cada vez que se aprieta el botón B</b>. Pruébala moviendo el termómetro del simulador.</p>',
+    starter: 'def al_presionar_b():\n    # muestra la temperatura\n    pass\ninput.on_button_pressed(Button.___, al_presionar_b)\n',
+    check: async (sim) => {
+      for (const t of [27, 12]) {
+        sim.setTemperature(t);
+        await sim.trigger('B');
+        const last = sim.lastShown('number');
+        if (!last || Number(last.value) !== t) return `con ${t} °C, al apretar B la placa tiene que mostrar ${t}. Usa basic.show_number(input.temperature()).`;
+      }
+      return true;
+    },
+    require: [{ re: /Button\.B/, msg: 'Tiene que reaccionar al botón B.' }],
   },
   {
     id: 'b-ceibal-1', center: 'ceibal', title: '¿Es IA o no?', type: 'classify',

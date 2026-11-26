@@ -352,3 +352,118 @@
 @media print {
   .apec-root { position: static; }
 }
+
+/* ======================================================================
+   SIMULADORES (placas y circuitos)
+   ====================================================================== */
+.apec-sim { grid-template-columns: minmax(260px, 0.62fr) minmax(340px, 1.38fr); align-items: start; }
+@media (max-width: 900px) { .apec-sim { grid-template-columns: 1fr; } }
+.apec-mb-goals { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 6px; }
+.apec-mb-goals li { display: flex; gap: 8px; align-items: flex-start; background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 10px; padding: 8px 10px; }
+.apec-mb-goals li.ok { border-color: var(--c-success); background: var(--c-success-bg); }
+.apec-mb-goals small { color: var(--c-muted); }
+
+/* micro:bit simulada */
+.apec-mb-layout { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 1100px) { .apec-mb-layout { grid-template-columns: 1fr; } }
+.apec-mb-col { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.apec-mb-sim { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+.apec-mb-face {
+  position: relative; display: grid; grid-template-columns: auto auto auto; align-items: center; gap: 14px;
+  background: rgb(28, 30, 38); border: 3px solid rgb(10, 12, 16); border-radius: 22px; padding: 22px 18px 44px; color: rgb(220, 225, 232);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+.apec-mb-face .apec-microbit { gap: 7px; }
+.apec-mb-face .apec-mb-row { grid-template-columns: repeat(5, 30px); gap: 7px; }
+.apec-led.sim { width: 30px; height: 30px; border-radius: 5px; cursor: default; display: block; }
+.apec-mb-btn {
+  font: 800 15px var(--font-ui); width: 46px; height: 46px; border-radius: 50%; cursor: pointer;
+  background: rgb(80, 86, 98); color: rgb(255, 255, 255); border: 3px solid rgb(40, 44, 52); box-shadow: 0 3px 0 rgb(15, 17, 22);
+  transition: transform 0.08s ease-out;
+}
+.apec-mb-btn:active, .apec-mb-btn.held { transform: translateY(2px) scale(0.95); background: rgb(255, 176, 0); color: rgb(26, 18, 0); box-shadow: none; }
+.apec-mb-btn.shake { width: auto; height: auto; border-radius: 10px; padding: 8px 14px; }
+.apec-mb-pins { position: absolute; left: -3px; right: -3px; bottom: -3px; height: 30px; display: flex; justify-content: space-around; align-items: center;
+  background: rgb(212, 160, 23); border-radius: 0 0 20px 20px; border: 3px solid rgb(10, 12, 16); border-top: 0; }
+.apec-mb-pins span { font: 800 11px var(--font-code); color: rgb(40, 30, 0); background: rgb(240, 200, 80); border-radius: 50%; min-width: 22px; height: 22px; display: grid; place-items: center; padding: 0 3px; }
+.apec-mb-side { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; }
+.apec-mb-sensor { display: flex; align-items: center; gap: 8px; font-size: 14px; background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 10px; padding: 6px 10px; }
+.apec-mb-sensor input { width: 130px; accent-color: rgb(255, 176, 0); }
+.apec-mb-shown { font-size: 14px; color: var(--c-muted); text-align: center; min-height: 20px; }
+.apec-ext-led { display: flex; align-items: center; gap: 6px; background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 10px; padding: 6px 10px; }
+.apec-ext-bulb { width: 26px; height: 26px; border-radius: 50% 50% 40% 40%; background: rgba(255, 64, 64, 0.25); border: 2px solid rgb(120, 30, 30); transition: background 0.1s ease-out, box-shadow 0.1s ease-out; }
+.apec-ext-led.on .apec-ext-bulb { background: rgb(255, 50, 50); box-shadow: 0 0 18px rgba(255, 50, 50, 0.9); }
+.apec-mb-target { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.apec-mini-matrix { display: grid; grid-template-columns: repeat(5, 16px); gap: 4px; background: rgb(28, 30, 38); padding: 8px; border-radius: 10px; }
+.apec-mini-matrix i { width: 16px; height: 16px; border-radius: 3px; background: rgb(60, 25, 25); }
+.apec-mini-matrix i.on { background: rgb(255, 59, 59); box-shadow: 0 0 6px rgba(255, 59, 59, 0.8); }
+.apec-editor-wrap-sm { min-height: 180px; max-height: 38vh; }
+.apec-console-sm { min-height: 70px; max-height: 22vh; }
+
+/* conectores */
+.apec-ports-devices { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.apec-dev { font: inherit; text-align: left; display: flex; flex-direction: column; gap: 2px; padding: 10px; border-radius: 12px; cursor: pointer; border: 2px solid var(--c-border); background: var(--c-panel); color: var(--c-text); }
+.apec-dev.sel { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(255, 176, 0, 0.3); }
+.apec-dev.ok { border-color: var(--c-success); background: var(--c-success-bg); }
+.apec-dev-icon { font-size: 28px; }
+.apec-dev small { color: var(--c-muted); font-size: 12.5px; }
+.apec-dev-works { color: var(--c-success) !important; font-weight: 700; }
+.apec-ports-hw { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 12px; }
+@media (max-width: 640px) { .apec-ports-hw { grid-template-columns: 1fr; } }
+.apec-ports-pc, .apec-ports-mb { background: var(--c-panel-2); border: 2px dashed var(--c-border); border-radius: 14px; padding: 10px; }
+.apec-ports-title { font-weight: 800; margin-bottom: 8px; }
+.apec-ports-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.apec-port { font: inherit; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 84px; padding: 8px; border-radius: 10px; cursor: pointer; border: 2px solid var(--c-border); background: var(--c-panel); color: var(--c-text); }
+.apec-port:hover { border-color: var(--c-accent); }
+.apec-port.busy { border-color: var(--c-success); }
+.apec-port-shape { font-family: var(--font-code); font-weight: 800; font-size: 14px; }
+.apec-port small { font-size: 12px; color: var(--c-muted); }
+
+/* corriente */
+.apec-amp { display: flex; justify-content: space-between; align-items: center; background: rgb(5, 8, 12); color: rgb(126, 231, 135); border-radius: 10px; padding: 8px 14px; font-family: var(--font-code); margin-top: 10px; }
+.apec-amp b { font-size: 26px; }
+.apec-ohm-formula { font-family: var(--font-code); font-size: 15px; margin: 8px 0 0; }
+.apec-fieldset input[type="range"] { width: 100%; accent-color: rgb(255, 176, 0); }
+.apec-flow-dash { animation: apec-flow linear infinite; }
+@keyframes apec-flow { to { stroke-dashoffset: -40; } }
+
+/* cableado */
+.apec-wires svg { max-height: 300px; }
+.apec-wire { fill: none; stroke: rgb(0, 220, 240); stroke-width: 5; stroke-linecap: round; cursor: pointer; opacity: 0.9; }
+.apec-wire:hover, .apec-wire:focus { stroke: var(--c-fail); outline: none; }
+.apec-term { cursor: pointer; }
+.apec-term .apec-term-hit { fill: transparent; }
+.apec-term .apec-term-dot { fill: rgb(255, 176, 0); stroke: rgb(26, 18, 0); stroke-width: 3; }
+.apec-term:hover .apec-term-dot, .apec-term:focus .apec-term-dot { fill: rgb(255, 220, 120); }
+.apec-term:focus { outline: none; }
+.apec-term.sel .apec-term-dot { fill: rgb(0, 220, 240); stroke: rgb(255, 255, 255); stroke-width: 4; }
+.apec-wires { overflow-x: auto; }
+@media (max-width: 640px) { .apec-wires svg { min-width: 460px; } }
+.apec-mb-layout .apec-codeview .apec-code { font-size: 14px; }
+
+/* protoboard */
+.apec-proto-wrap { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: start; }
+@media (max-width: 640px) { .apec-proto-wrap { grid-template-columns: 1fr; } }
+.apec-proto-battery { display: flex; flex-direction: column; gap: 6px; align-items: center; text-align: center; background: var(--c-panel); border: 1px solid var(--c-border); border-radius: 12px; padding: 10px; font-weight: 800; }
+.apec-proto-battery small { font-weight: 500; color: var(--c-muted); font-size: 12px; }
+.apec-proto-bulb { font-size: 34px; filter: grayscale(1) opacity(0.5); transition: filter 0.2s ease-out; }
+.apec-proto-bulb.on { filter: drop-shadow(0 0 12px rgb(255, 60, 60)); }
+.apec-proto-bulb.burnt::after { content: '💥'; }
+.apec-proto-scroll { overflow-x: auto; }
+.apec-proto-board { display: inline-flex; flex-direction: column; gap: 3px; background: rgb(236, 233, 224); border-radius: 12px; padding: 10px; color: rgb(60, 60, 60); }
+.apec-proto-row { display: flex; gap: 3px; align-items: center; }
+.apec-proto-row.rail.plus { border-bottom: 2px solid rgb(220, 40, 40); }
+.apec-proto-row.rail.minus { border-bottom: 2px solid rgb(40, 90, 220); margin-bottom: 6px; }
+.apec-proto-lbl { width: 22px; text-align: center; font: 700 11px var(--font-code); color: rgb(100, 100, 100); flex-shrink: 0; }
+.apec-proto-row.head .apec-proto-lbl { height: 14px; }
+.apec-proto-gap { height: 16px; margin: 2px 0; background: rgb(214, 209, 196); border-radius: 4px; font: 700 9px var(--font-code); color: rgb(140, 135, 120); text-align: center; letter-spacing: 0.2em; }
+.apec-hole {
+  width: 22px; height: 22px; flex-shrink: 0; border-radius: 4px; border: 1px solid rgb(190, 185, 170); background: rgb(60, 60, 60);
+  cursor: pointer; padding: 0; font: 800 11px var(--font-code); color: rgb(255, 255, 255); display: grid; place-items: center;
+}
+.apec-hole.rail { background: rgb(80, 80, 80); }
+.apec-hole.net { box-shadow: 0 0 0 3px rgba(0, 200, 230, 0.75); }
+.apec-hole.has.r { background: rgb(210, 150, 40); color: rgb(40, 20, 0); }
+.apec-hole.has.w { background: rgb(20, 20, 20); border-color: rgb(0, 0, 0); }
+.apec-hole.has.led { background: rgb(230, 50, 50); }
+.apec-hole:focus-visible { outline: 3px solid rgb(255, 176, 0); }
